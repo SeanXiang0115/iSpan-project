@@ -3,7 +3,7 @@
 // import { useRoute } from 'vue-router';
 // import DefaultLayout from '@/layouts/default.vue';
 // import BlankLayout from '@/layouts/blank.vue';
-
+import NavBar from '@/layouts/navbar.vue';
 // const route = useRoute();
 
 // const layout = computed(() => {
@@ -13,6 +13,7 @@
 </script>
 
 <template>
+  <NavBar />
   <!-- <component :is="layout">
     <RouterView />
   </component> -->
