@@ -20,6 +20,10 @@ const routes = [
     component: () => import('@/views/MapSearchView.vue'),
     name: 'MapSearch'
   }, {
+    path: '/feedback',
+    component: () => import('@/views/FeedbackView.vue'),
+    name: 'Feedback'
+  }, {
     path: '/feedbackAP',
     component: () => import('@/views/FeedbackAPView.vue'),
     name: 'FeedbackAP'

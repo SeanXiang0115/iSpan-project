@@ -3,7 +3,7 @@
 </script>
 
 <template>
-    <h1>地圖_Search Bar</h1>
+    <h1>地圖_左側區塊</h1>
 </template>
 
 <style scoped>
