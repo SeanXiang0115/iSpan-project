@@ -27,6 +27,12 @@ const routes = [
     path: '/feedbackAP',
     component: () => import('@/views/FeedbackAPView.vue'),
     name: 'FeedbackAP'
+  },
+  {
+    path: '/register',
+    component: () => import('@/views/RegisterView.vue'),
+    name: 'Register',
+    meta: { layout: 'blank' }
   }
 ];
 
