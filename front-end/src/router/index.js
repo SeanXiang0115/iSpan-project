@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+
+
 // 定義router
 const routes = [
   {
@@ -11,6 +13,17 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: () => import('@/views/LoginView.vue'),
+  },
+
+  {
+    path: '/shopStore',
+    component: () => import('@/views/shopStore.vue'),
+    name: 'ShopStore'
+  },
+  {
+    path: '/Cart',
+    component: () => import('@/views/shopCart.vue'),
+    name: 'ShopCart'
   },
   {
     path: '/storeInfo',
@@ -69,6 +82,7 @@ const routes = [
     name: 'Register',
     meta: { layout: 'blank' }
   }
+
 ];
 
 // 建立router
