@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 
+
 const router = useRouter();
 const email = ref('');
 const password = ref('');
@@ -15,7 +16,6 @@ const goToRegister = () => {
 const handleLogin = () => {
   console.log('Login attempt with:', email.value, password.value);
 };
-
 </script>
 
 <template>

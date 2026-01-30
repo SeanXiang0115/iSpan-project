@@ -3,15 +3,9 @@ import { createRouter, createWebHistory } from 'vue-router';
 // 定義router
 const routes = [
   {
-    path: '/',
-    name: 'Home',
-    component: () => import('@/views/HomeView.vue'),
-  },
-  {
     path: '/login',
     name: 'Login',
     component: () => import('@/views/LoginView.vue'),
-    meta: { layout: 'blank' }
   },
   {
     path: '/storeInfo',
@@ -42,8 +36,31 @@ const routes = [
     path: '/owner/bookings/data',
     name: 'Data',
     component: () => import('@/views/BookingDataView.vue')
-
-
+  },
+  {
+    path: '/home',
+    component: () => import('@/views/HomeView.vue'),
+    name: 'Home'
+  },
+  {
+    path: '/about',
+    component: () => import('@/views/AboutView.vue'),
+    name: 'About'
+  },
+  {
+    path: '/mapSearch',
+    component: () => import('@/views/MapSearchView.vue'),
+    name: 'MapSearch'
+  },
+  {
+    path: '/feedback',
+    component: () => import('@/views/FeedbackView.vue'),
+    name: 'Feedback'
+  },
+  {
+    path: '/feedbackAP',
+    component: () => import('@/views/FeedbackAPView.vue'),
+    name: 'FeedbackAP'
   },
   {
     path: '/register',
