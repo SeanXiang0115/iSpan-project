@@ -55,11 +55,12 @@ const routes = [
     name: 'Data',
     component: () => import('@/views/BookingDataView.vue')
   },
+  // {
+  //   path: '/home',
+  //   component: () => import('@/views/HomeView.vue'),
+  //   name: 'Home'
+  // }, 
   {
-    path: '/home',
-    component: () => import('@/views/HomeView.vue'),
-    name: 'Home'
-  }, {
     path: '/about',
     component: () => import('@/views/AboutView.vue'),
     name: 'About'
