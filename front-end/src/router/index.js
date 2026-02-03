@@ -95,6 +95,73 @@ const routes = [
     path: '/checkOut',
     component: () => import('@/views/checkOut.vue'),
     name: 'checkOut',
+  },
+  // Admin Routes
+  {
+    path: '/admin',
+    component: () => import('@/layouts/admin.vue'),
+    children: [
+      {
+        path: '',
+        name: 'AdminDashboard',
+        component: () => import('@/views/ERPTransferView.vue')
+      },
+      {
+        path: 'frontend/banners',
+        name: 'AdminFrontendBanners',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'frontend/content',
+        name: 'AdminFrontendContent',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'news/list',
+        name: 'AdminNewsList',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'news/create',
+        name: 'AdminNewsCreate',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'knowledge/list',
+        name: 'AdminKnowledgeList',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'knowledge/categories',
+        name: 'AdminKnowledgeCategories',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'products/list',
+        name: 'AdminProductsList',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'products/create',
+        name: 'AdminProductsCreate',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'products/categories',
+        name: 'AdminProductsCategories',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'sales/orders',
+        name: 'AdminSalesOrders',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'sales/reports',
+        name: 'AdminSalesReports',
+        component: () => import('@/views/AdminDashboard.vue') // placeholder
+      }
+    ]
   }
 
 ];
