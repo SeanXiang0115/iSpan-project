@@ -29,16 +29,7 @@ import BaseButton from '@/components/common/BaseButton.vue';
       <li>
         <RouterLink to="/user/bookings" class="text-gdg">訂位查詢頁面(消費者)</RouterLink>
       </li>
-      <div>======================================</div>
-      <li>
-        <RouterLink to="/owner/storeInfo" class="text-gdg">店家資訊編輯頁面(商家)</RouterLink>
-      </li>
-      <li>
-        <RouterLink to="/owner/bookings/seats" class="text-gdg">座位數量與時段維護(商家)</RouterLink>
-      </li>
-      <li>
-        <RouterLink to="/owner/bookings/data" class="text-gdg">訂位資料管理(商家)</RouterLink>
-      </li>
+      
     </ul>
   </div>
 </template>

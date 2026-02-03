@@ -41,26 +41,9 @@ const goTo = (path) => {
           </li>
 
           <!-- Template 2: Hover Dropdown -->
-          <li class="nav-item dropdown">
-            <a 
-              class="nav-link dropdown-toggle" 
-              href="#" 
-              id="navbarDropdown1" 
-              role="button" 
-              data-bs-toggle="dropdown" 
-              aria-expanded="false"
-            >
-              aaa
-            </a>
-            <ul class="dropdown-menu border-top-0" aria-labelledby="navbarDropdown1">
-              <li><a class="dropdown-item" href="#">1</a></li>
-              <li><a class="dropdown-item" href="#">2</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#">3</a></li>
-            </ul>
-          </li>
+    
 
-          <li class="nav-item dropdown">
+          <!-- <li class="nav-item dropdown">
             <a 
               class="nav-link dropdown-toggle" 
               href="#" 
@@ -75,7 +58,7 @@ const goTo = (path) => {
               <li><a class="dropdown-item" href="#">1</a></li>
               <li><a class="dropdown-item" href="#">2</a></li>
             </ul>
-          </li>
+          </li> -->
 
           <li class="nav-item">
             <a class="nav-link" href="#">地圖</a>
@@ -83,6 +66,24 @@ const goTo = (path) => {
 
           <li class="nav-item">
             <a class="nav-link" href="#" @click.prevent="goTo('/shopStore')">質感選物</a>
+          </li>
+
+          <li class="nav-item dropdown">
+            <a 
+              class="nav-link dropdown-toggle" 
+              href="#" 
+              id="navbarDropdown1" 
+              role="button" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false"
+            >
+              商家編輯
+            </a>
+            <ul class="dropdown-menu border-top-0" aria-labelledby="navbarDropdown1">
+              <li><a class="dropdown-item" href="#" @click.prevent="goTo('/owner/storeInfo')">店家資訊編輯頁面(商家)</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="goTo('/owner/bookings/seats')">座位數量與時段維護(商家)</a></li>             
+              <li><a class="dropdown-item" href="#" @click.prevent="goTo('/owner/bookings/data')">訂位資料管理(商家)</a></li>
+            </ul>
           </li>
         </ul>
 
