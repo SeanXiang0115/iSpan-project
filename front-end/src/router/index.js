@@ -26,7 +26,11 @@ const routes = [
     component: () => import('@/views/ResetPasswordView.vue'),
     meta: { layout: 'blank' }
   },
-
+  {
+    path: '/userInfo',
+    name: 'UserInfo',
+    component: () => import('@/views/UserInfoView.vue'),
+  },
   {
     path: '/shopStore',
     component: () => import('@/views/shopStore.vue'),

@@ -112,7 +112,7 @@ const goTo = (path) => {
               <li><a class="dropdown-item" href="#" @click.prevent="goTo('/login')">會員登入</a></li>
               <li><a class="dropdown-item" href="#" @click.prevent="goTo('/register')">加入會員</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#">會員中心</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="goTo('/userInfo')">會員中心</a></li>
             </ul>
           </div>
         </div>
