@@ -1,6 +1,6 @@
 <script setup>
 import MapContainer from '@/components/MapContainer.vue';
-import MapStoreCard from '@/components/MapStoreCard.vue';
+import MapCardContainer from '@/components/MapCardContainer.vue';
 import SearchBar from '@/components/SearchBar.vue';
 </script>
 
@@ -12,8 +12,8 @@ import SearchBar from '@/components/SearchBar.vue';
         <br>
 
         <div style="display: flex;">
-            <div style="flex: 1; background-color: lightblue;"><MapContainer></MapContainer></div>
-            <div style="flex: 1; background-color: lightgreen;"><MapStoreCard></MapStoreCard></div>
+            <div style="flex: 4; background-color: lightblue;"><MapContainer></MapContainer></div>
+            <div style="flex: 3; background-color: lightgreen;"><MapCardContainer></MapCardContainer></div>
         </div>
        
        
