@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 const fakeBookingData = ref([
   {
     id: "1",
-    resterount: "唐門食堂",
+    restaurant: "唐門食堂",
     name: "趙活",
     phone: "0912-345-678",
     date: "2026-02-14",
@@ -17,7 +17,7 @@ const fakeBookingData = ref([
   },
   {
     id: "2",
-    resterount: "Tahiti大溪地餐廳",
+    restaurant: "Tahiti大溪地餐廳",
     name: "Arthur Morgan",
     phone: "0922-888-777",
     date: "2026-02-15",
@@ -43,7 +43,7 @@ const handleUpdate = async (updatedItem) => {
       timer: 1500,
       showConfirmButton: false
     });
-    
+
     console.log('使用者更新成功:', updatedItem);
   }
 };
@@ -52,7 +52,7 @@ const handleUpdate = async (updatedItem) => {
 const handleDelete = async (booking) => {
   const result = await Swal.fire({
     title: '確定要取消訂位嗎？',
-    text: `取消 ${booking.resterount} 的訂位後可能無法保留原額度`,
+    text: `您即將取消 ${booking.restaurant} 的訂位。`,
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#d33',
@@ -64,15 +64,11 @@ const handleDelete = async (booking) => {
   if (result.isConfirmed) {
     // 這裡通常是呼叫 API
     fakeBookingData.value = fakeBookingData.value.filter(item => item.id !== booking.id);
-    
+
     Swal.fire('已取消訂位', '我們已更新您的訂位紀錄。', 'success');
   }
 };
 
-// 額外邏輯：當人數或日期改變時，重置已選時段
-const resetTime = () => {
-  bookingForm.value.time = '';
-};
 
 </script>
 
@@ -80,18 +76,12 @@ const resetTime = () => {
   <div class="container py-4">
     <h1 class="text-gdg mb-4">我的訂位管理</h1>
 
-    <EditBookingData 
-      :bookings="fakeBookingData" 
-      role="user" 
-      @update="handleUpdate" 
-      @delete="handleDelete"
-    />
-    
+    <EditBookingData :bookings="fakeBookingData" role="user" @update="handleUpdate" @delete="handleDelete" />
+
     <div class="mt-4 text-muted small">
       <p>* 提醒：使用者模式僅開放修改「姓名」與「電話」，如需更改時間請致電店家。</p>
     </div>
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -6,10 +6,10 @@ import BaseButton from '@/components/common/BaseButton.vue';
 
 // 假資料初始狀態
 const seatData = ref([
-  { type: 2, count: 5 },
-  { type: 4, count: 10 },
-  { type: 6, count: 2 },
-  { type: 8, count: 1 }
+  { type: 2, count: 0 },
+  { type: 4, count: 0 },
+  { type: 6, count: 0 },
+  { type: 8, count: 0 }
 ]);
 
 const bookingConfig = ref({
@@ -49,7 +49,6 @@ const saveSettings = () => {
 </template>
 
 <style scoped>
-/* 保持乾淨 */
 section {
   transition: all 0.3s ease;
 }

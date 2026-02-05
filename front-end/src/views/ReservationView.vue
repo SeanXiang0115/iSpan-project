@@ -1,63 +1,96 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import BaseButton from '@/components/common/BaseButton.vue';
 import Swal from 'sweetalert2';
 
 const router = useRouter();
 
-// --- 模擬資料 (Mock Data) ---
-const storeInfo = {
+// --- 1. 商店配置 (對應資料表 stores_info 與 seats 的統計) ---
+const storeConfig = {
   name: '唐門食堂',
-  availableTables: [2, 4, 6, 8],
-  bookedSlots: [
-    { date: '2026-02-10', time: '12:00', type: 2 },
-    { date: '2026-02-10', time: '18:00', type: 8 },
-    { date: '2026-02-10', time: '16:00', type: 8 },
-  ]
+  timeLimit: 90, // 用餐限制 (對應 stores_info.time_limit)
+  // 模擬資料庫計算後的總桌數：2人座3張, 4人座2張...
+  tables: {
+    2: 3,
+    4: 2,
+    6: 1,
+    8: 1
+  }
 };
 
+// 取得所有可用的桌型 (用於生成按鈕)
+const availableTableTypes = Object.keys(storeConfig.tables).map(Number);
+
+// 固定開放時段 (可根據資料表動態生成，目前先固定)
 const timeSlots = ['12:00', '14:00', '16:00', '18:00', '20:00'];
 
-// --- 使用者選擇狀態 ---
-const isLogin = ref(false); // 模擬登入狀態
+// --- 2. 模擬已訂位資料 (對應 booking 表，需含起訖時間) ---
+const bookedData = ref([
+  { date: '2026-02-10', startTime: '12:00', endTime: '13:30', type: 2 },
+  { date: '2026-02-10', startTime: '12:30', endTime: '14:00', type: 2 },
+  { date: '2026-02-10', startTime: '18:00', endTime: '19:30', type: 8 },
+  { date: '2026-02-10', startTime: '13:00', endTime: '14:30', type: 2 },
+]);
+
+// --- 3. 使用者選擇狀態 ---
+const isLogin = ref(true);
 const bookingForm = ref({
   seatType: null,
   date: '',
   time: ''
 });
 
-// --- 計算邏輯 ---
-const isSlotAvailable = (time) => {
+// --- 4. 核心判斷邏輯：重疊判定 ---
+const isSlotAvailable = (targetTime) => {
   if (!bookingForm.value.date || !bookingForm.value.seatType) return true;
-  return !storeInfo.bookedSlots.find(slot => 
-    slot.date === bookingForm.value.date && 
-    slot.time === time && 
-    slot.type === bookingForm.value.seatType
-  );
+
+  const targetDate = bookingForm.value.date;
+  const targetType = bookingForm.value.seatType;
+
+  // 計算目標時段的起訖分鐘數
+  const [h, m] = targetTime.split(':').map(Number);
+  const targetStartTotal = h * 60 + m;
+  const targetEndTotal = targetStartTotal + storeConfig.timeLimit;
+
+  // 篩選出同日期、同桌型且時間有重疊的訂位
+  const overlaps = bookedData.value.filter(slot => {
+    if (slot.date !== targetDate || slot.type !== targetType) return false;
+
+    const [sH, sM] = slot.startTime.split(':').map(Number);
+    const [eH, eM] = slot.endTime.split(':').map(Number);
+    const slotStartTotal = sH * 60 + sM;
+    const slotEndTotal = eH * 60 + eM;
+
+    // 重疊判定：(開始A < 結束B) 且 (結束A > 開始B)
+    return targetStartTotal < slotEndTotal && targetEndTotal > slotStartTotal;
+  });
+
+  // 如果佔用桌數 < 總桌數，則該時段可選
+  return overlaps.length < storeConfig.tables[targetType];
 };
 
-//
-const falseSelect = () => {
-Swal.fire({
-      icon: 'error',
-      title: '請完整選擇人數、日期與時段！',
-      confirmButtonText: '確定',
-    });
-}
+// --- 5. 其他輔助邏輯 ---
+const minDate = new Date().toISOString().split('T')[0];
+const maxDate = computed(() => {
+  const date = new Date();
+  date.setMonth(date.getMonth() + 1);
+  return date.toISOString().split('T')[0];
+});
 
-// --- 動作處理 ---
+const resetTime = () => { bookingForm.value.time = ''; };
+
 const handleBooking = () => {
   if (!bookingForm.value.seatType || !bookingForm.value.date || !bookingForm.value.time) {
-    falseSelect();
+    Swal.fire({ icon: 'error', title: '請完整選擇預約資訊！' });
     return;
   }
 
   if (!isLogin.value) {
-    alert('請先登入');
-    router.push({ name: 'Login' });
+    console.log('未登入預約資料：', bookingForm.value);
+    Swal.fire('請先登入', '預約功能需要會員權限', 'info');
   } else {
-    alert(`訂位成功！\n人數：${bookingForm.value.seatType}\n時間：${bookingForm.value.date} ${bookingForm.value.time}`);
+    Swal.fire('訂位成功！', `${bookingForm.value.date} ${bookingForm.value.time}`, 'success');
     router.push({ name: 'UserBookings' });
   }
 };
@@ -65,23 +98,21 @@ const handleBooking = () => {
 
 <template>
   <div class="container py-4">
-    <h1 class="text-gdg mb-4">{{ storeInfo.name }}</h1>
+    <h1 class="text-gdg mb-4">{{ storeConfig.name }}</h1>
 
     <div class="bg-gdg-light p-4 border mb-4">
-      <p class="mb-0 text-muted">請選擇您的預約資訊。若時段已被預訂或不符合人數，按鈕將會隱藏。</p>
+      <p class="mb-0 text-muted">
+        請選擇您的預約資訊。若該時段桌位已滿，按鈕將會隱藏。
+      </p>
     </div>
 
     <div class="booking-options">
       <div class="mb-4">
-        <label class="form-label d-block fw-bold mb-2">1. 選擇人數</label>
+        <label class="form-label d-block fw-bold mb-2">1. 選擇座位類型</label>
         <div class="d-flex flex-wrap gap-2">
-          <button 
-            v-for="type in storeInfo.availableTables" :key="type"
-            type="button"
-            class="btn"
+          <button v-for="type in availableTableTypes" :key="type" type="button" class="btn"
             :class="bookingForm.seatType === type ? 'btn-gdg' : 'btn-outline-secondary'"
-            @click="bookingForm.seatType = type"
-          >
+            @click="bookingForm.seatType = type; resetTime()">
             {{ type }} 人座
           </button>
         </div>
@@ -89,25 +120,16 @@ const handleBooking = () => {
 
       <div class="mb-4">
         <label class="form-label fw-bold mb-2">2. 選擇日期</label>
-        <input 
-          type="date" 
-          class="form-control" 
-          v-model="bookingForm.date" 
-          style="max-width: 300px;"
-        >
+        <input type="date" class="form-control" v-model="bookingForm.date" style="max-width: 300px;" :min="minDate"
+          :max="maxDate" @change="resetTime">
       </div>
 
       <div class="mb-4">
         <label class="form-label d-block fw-bold mb-2">3. 選擇時段</label>
         <div class="d-flex flex-wrap gap-2">
           <template v-for="slot in timeSlots" :key="slot">
-            <button 
-              v-if="isSlotAvailable(slot)"
-              type="button"
-              class="btn"
-              :class="bookingForm.time === slot ? 'btn-gdg' : 'btn-outline-secondary'"
-              @click="bookingForm.time = slot"
-            >
+            <button v-if="isSlotAvailable(slot)" type="button" class="btn"
+              :class="bookingForm.time === slot ? 'btn-gdg' : 'btn-outline-secondary'" @click="bookingForm.time = slot">
               {{ slot }}
             </button>
           </template>
@@ -122,6 +144,3 @@ const handleBooking = () => {
     </div>
   </div>
 </template>
-
-<style scoped>
-</style>
