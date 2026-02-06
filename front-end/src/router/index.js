@@ -14,7 +14,28 @@ const routes = [
     name: 'Login',
     component: () => import('@/views/LoginView.vue'),
   },
-
+  {
+    path: '/forgot-password',
+    name: 'ForgetPassword',
+    component: () => import('@/views/ForgetPasswordView.vue'),
+    meta: { layout: 'blank' }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('@/views/ResetPasswordView.vue'),
+    meta: { layout: 'blank' }
+  },
+  {
+    path: '/userInfo',
+    name: 'UserInfo',
+    component: () => import('@/views/UserInfoView.vue'),
+  },
+  {
+    path: '/storeRegistration',
+    name: 'StoreRegistration',
+    component: () => import('@/views/StoreRegistrationView.vue'),
+  },
   {
     path: '/shopStore',
     component: () => import('@/views/shopStore.vue'),
@@ -160,6 +181,16 @@ const routes = [
         path: 'sales/reports',
         name: 'AdminSalesReports',
         component: () => import('@/views/AdminDashboard.vue') // placeholder
+      },
+      {
+        path: 'users/list',
+        name: 'AdminUsersList',
+        component: () => import('@/views/UserListView.vue')
+      },
+      {
+        path: 'users/storeRegistration',
+        name: 'StoreRegistrationCheck',
+        component: () => import('@/views/StoreRegistrationCheckView.vue')
       }
     ]
   }
