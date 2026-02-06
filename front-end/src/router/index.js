@@ -186,6 +186,11 @@ const routes = [
         path: 'users/list',
         name: 'AdminUsersList',
         component: () => import('@/views/UserListView.vue')
+      },
+      {
+        path: 'users/storeRegistration',
+        name: 'StoreRegistrationCheck',
+        component: () => import('@/views/StoreRegistrationCheckView.vue')
       }
     ]
   }

@@ -94,6 +94,7 @@
             </a>
             <ul class="submenu" v-if="!sidebarCollapsed && openSubmenu === 'users'">
               <li><router-link to="/admin/users/list" class="submenu-link">使用者列表</router-link></li>
+              <li><router-link to="/admin/users/storeRegistration" class="submenu-link">商家註冊審核</router-link></li>
             </ul>
           </li>
         </ul>
