@@ -100,6 +100,18 @@
           </li>
 
 
+          <!-- 使用者管理 -->
+          <li class="nav-item has-submenu">
+            <a href="#" class="nav-link" @click.prevent="toggleSubmenu('users')">
+              <i class="bi bi-people"></i>
+              <span v-if="!sidebarCollapsed">使用者管理</span>
+              <i v-if="!sidebarCollapsed" class="bi bi-chevron-down submenu-arrow" :class="{ rotated: openSubmenu === 'users' }"></i>
+            </a>
+            <ul class="submenu" v-if="!sidebarCollapsed && openSubmenu === 'users'">
+              <li><router-link to="/admin/users/list" class="submenu-link">使用者列表</router-link></li>
+              <li><router-link to="/admin/users/storeRegistration" class="submenu-link">商家註冊審核</router-link></li>
+            </ul>
+          </li>
         </ul>
       </nav>
 
@@ -175,6 +187,7 @@ export default {
       if (path.includes('/admin/knowledge')) return '擬案知識管理';
       if (path.includes('/admin/products')) return '商品管理';
       if (path.includes('/admin/sales')) return '銷售管理';
+      if (path.includes('/admin/users')) return '使用者管理';
       return '';
     });
 
@@ -185,6 +198,7 @@ export default {
       if (path.includes('/categories')) return '分類管理';
       if (path.includes('/orders')) return '訂單管理';
       if (path.includes('/reports')) return '報表';
+      if (path.includes('/admin/users/list')) return '使用者列表';
       return 'ERP格式轉換';
     });
 

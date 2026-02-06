@@ -61,7 +61,7 @@ const goTo = (path) => {
           </li> -->
 
           <li class="nav-item">
-            <a class="nav-link" href="#">地圖</a>
+            <a class="nav-link" href="#"  @click.prevent="goTo('/mapSearch')">美味座標</a>
           </li>
 
           <li class="nav-item">
@@ -85,9 +85,14 @@ const goTo = (path) => {
               <li><a class="dropdown-item" href="#" @click.prevent="goTo('/owner/bookings/data')">訂位資料管理(商家)</a></li>
             </ul>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="#" @click.prevent="goTo('/storeRegistration')">申請成為商家</a>
+          </li>
         </ul>
 
         
+
         <!-- Right Side: Icons & Account -->
         <div class="nav-icons d-flex align-items-center" >
           <a class="nav-link position-relative px-3"  title="購物車" @click="router.push('/cart')">
@@ -112,7 +117,7 @@ const goTo = (path) => {
               <li><a class="dropdown-item" href="#" @click.prevent="goTo('/login')">會員登入</a></li>
               <li><a class="dropdown-item" href="#" @click.prevent="goTo('/register')">加入會員</a></li>
               <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="#">會員中心</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="goTo('/userInfo')">會員中心</a></li>
             </ul>
           </div>
         </div>
