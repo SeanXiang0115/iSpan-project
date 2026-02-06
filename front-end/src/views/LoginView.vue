@@ -4,10 +4,12 @@ import { useRouter } from 'vue-router';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import { authAPI } from '@/api/auth';
+import { useAuthStore } from '@/stores/auth';
 import { decodeJwtPayload, getRoleFromToken, getSubFromToken, isTokenExpired } from '@/utils/jwt';
 
 
 const router = useRouter();
+const authStore = useAuthStore();
 const email = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
@@ -49,11 +51,10 @@ const handleLogin = async () => {
     console.log('Is Expired:', expired);
     console.log('=================================');
     
-    // 可選：儲存 token 到 localStorage
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('refreshToken', response.data.refreshToken);
+    // 使用 Auth Store 儲存登入資訊
+    authStore.login(response.data.user, accessToken, response.data.refreshToken);
     
-    alert(`登入成功！\n角色: ${role}\n帳號: ${sub}`);
+    alert(`登入成功！\n你好, ${authStore.userName}\n角色: ${role}`);
     
     // 導向首頁或 dashboard
     // router.push('/');

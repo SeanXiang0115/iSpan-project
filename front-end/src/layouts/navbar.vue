@@ -1,14 +1,22 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
+import { useAuthStore } from '@/stores/auth';
 
 
 const router = useRouter();
-const cartStore = useCartStore()
+const cartStore = useCartStore();
+const authStore = useAuthStore();
 
 const goTo = (path) => {
   router.push(path);
 };
+
+const handleLogout = () => {
+  authStore.logout();
+  router.push('/login');
+};
+
 </script>
 
 <template>
@@ -95,6 +103,11 @@ const goTo = (path) => {
 
         <!-- Right Side: Icons & Account -->
         <div class="nav-icons d-flex align-items-center" >
+          <!-- 歡迎詞區塊 -->
+          <div v-if="authStore.isLoggedIn" class="welcome-msg me-2 text-dark small fw-medium">
+            {{ authStore.userName }} 您好
+          </div>
+
           <a class="nav-link position-relative px-3"  title="購物車" @click="router.push('/cart')">
             <i class="bi bi-cart3"></i>
             <span class="position-absolute top-25 start-75 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
@@ -114,8 +127,13 @@ const goTo = (path) => {
               <i class="bi bi-person-circle"></i>
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
-              <li><a class="dropdown-item" href="#" @click.prevent="goTo('/login')">會員登入</a></li>
-              <li><a class="dropdown-item" href="#" @click.prevent="goTo('/register')">加入會員</a></li>
+              <template v-if="!authStore.isLoggedIn">
+                <li><a class="dropdown-item" href="#" @click.prevent="goTo('/login')">會員登入</a></li>
+                <li><a class="dropdown-item" href="#" @click.prevent="goTo('/register')">加入會員</a></li>
+              </template>
+              <template v-else>
+                <li><a class="dropdown-item" href="#" @click.prevent="handleLogout">登出</a></li>
+              </template>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="#" @click.prevent="goTo('/userInfo')">會員中心</a></li>
             </ul>
