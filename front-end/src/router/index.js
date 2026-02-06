@@ -204,6 +204,11 @@ const routes = [
         component: () => import('@/views/BackEndproductsStock.vue') // placeholder
       },
     ]
+  },
+  {
+    path: '/getusertest',
+    name: 'GetUserTest',
+    component: () => import('@/views/GetUserTestView.vue')
   }
 
 ];
