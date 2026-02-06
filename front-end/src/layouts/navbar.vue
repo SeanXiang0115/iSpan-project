@@ -85,9 +85,14 @@ const goTo = (path) => {
               <li><a class="dropdown-item" href="#" @click.prevent="goTo('/owner/bookings/data')">訂位資料管理(商家)</a></li>
             </ul>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="#" @click.prevent="goTo('/storeRegistration')">申請成為商家</a>
+          </li>
         </ul>
 
         
+
         <!-- Right Side: Icons & Account -->
         <div class="nav-icons d-flex align-items-center" >
           <a class="nav-link position-relative px-3"  title="購物車" @click="router.push('/cart')">

@@ -39,11 +39,8 @@ const debugGoToReset = () => {
         <BaseCard maxWidth="500px" :shadow="true" :hoverEffect="false">
             <template #header>
                 <div class="text-center mb-2 mt-2">
-                    <i class="bi bi-github fs-1 text-dark"></i> <!-- Using github icon as placeholder/style ref -->
-                     <!-- Actually let's use a lock or generic icon if we don't want github logo -->
-                     <!-- User image showed github logo, but maybe we shouldn't use github logo for their app? -->
-                     <!-- Let's use a lock icon for "Reset password" context or just text -->
-                     <h2 class="fw-bold mt-3 mb-2">重設您的密碼</h2>
+                    <!-- <i class="bi bi-github fs-1 text-dark"></i> -->
+                    <h2 class="fw-bold mt-3 mb-2">重設您的密碼</h2>
                 </div>
             </template>
 
