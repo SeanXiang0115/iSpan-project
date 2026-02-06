@@ -61,7 +61,7 @@ const goTo = (path) => {
           </li> -->
 
           <li class="nav-item">
-            <a class="nav-link" href="#">地圖</a>
+            <a class="nav-link" href="#"  @click.prevent="goTo('/mapSearch')">美味座標</a>
           </li>
 
           <li class="nav-item">
