@@ -196,12 +196,12 @@ const routes = [
       {
         path: 'backEnd/productsList',
         name: 'BackEndProductsList',
-        component: () => import('@/views/BackEndProductsList.vue') // placeholder
+        component: () => import('@/views/BackEndProductsList.vue')
       },
       {
-        path: 'backEnd/productsStock',
-        name: 'BackEndProductsStock',
-        component: () => import('@/views/BackEndproductsStock.vue') // placeholder
+        path: 'backEnd/productsOrders',
+        name: 'BackEndproductsOrders',
+        component: () => import('@/views/BackEndproductsOrders.vue')
       },
     ]
   },
