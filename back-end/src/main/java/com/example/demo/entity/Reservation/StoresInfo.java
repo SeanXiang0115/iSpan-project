@@ -2,6 +2,8 @@ package com.example.demo.entity.Reservation;
 
 import lombok.Data;
 import jakarta.persistence.*;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.example.demo.entity.User;
@@ -35,10 +37,10 @@ public class StoresInfo {
     private String address;
 
     @Column(nullable = false, precision = 10, scale = 8)
-    private Double latitude;
+    private BigDecimal latitude;
 
     @Column(nullable = false, precision = 11, scale = 8)
-    private Double longitude;
+    private BigDecimal longitude;
 
     @Column(nullable = false)
     private Integer timeSlot = 30;
