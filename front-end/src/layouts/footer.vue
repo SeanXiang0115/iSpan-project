@@ -32,7 +32,7 @@ const goTo = (path) => {
               <h6 class="text-uppercase mb-3 fw-bold text-gdg">網站導覽</h6>
               <ul class="list-unstyled">
                 <li class="mb-2"><a href="#" @click.prevent="goTo('/')" class="footer-link">首頁</a></li>
-                <li class="mb-2"><a href="#" @click.prevent="goTo('/about')" class="footer-link">關於我們</a></li>
+                <li class="mb-2"><a href="#" @click.prevent="goTo('/about')" class="footer-link">島嶼初心</a></li>
                 <li class="mb-2"><a href="#" @click.prevent="goTo('/mapSearch')" class="footer-link">美味座標</a></li>
                 <li class="mb-2"><a href="#" @click.prevent="goTo('/shopStore')" class="footer-link">質感選物</a></li>
               </ul>
