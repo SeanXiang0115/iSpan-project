@@ -100,6 +100,14 @@
           </li>
 
 
+          <!-- 客服管理 -->
+          <li class="nav-item">
+            <router-link to="/feedbackAP" class="nav-link">
+              <i class="bi bi-headset"></i>
+              <span v-if="!sidebarCollapsed">客服管理</span>
+            </router-link>
+          </li>
+
           <!-- 使用者管理 -->
           <li class="nav-item has-submenu">
             <a href="#" class="nav-link" @click.prevent="toggleSubmenu('users')">
@@ -188,6 +196,7 @@ export default {
       if (path.includes('/admin/products')) return '商品管理';
       if (path.includes('/admin/sales')) return '銷售管理';
       if (path.includes('/admin/users')) return '使用者管理';
+      if (path.includes('/feedbackAP')) return '客服管理';
       return '';
     });
 

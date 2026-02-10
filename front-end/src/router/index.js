@@ -202,6 +202,10 @@ const routes = [
         path: 'backEnd/productsStock',
         name: 'BackEndProductsStock',
         component: () => import('@/views/BackEndproductsStock.vue') // placeholder
+      }, {
+        path: '/feedbackAP',
+        name: 'FeedbackAP',
+        component: () => import('@/views/FeedbackAPView.vue') // placeholder
       },
     ]
   },
