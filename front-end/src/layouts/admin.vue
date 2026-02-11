@@ -112,6 +112,15 @@
               <li><router-link to="/admin/users/storeRegistration" class="submenu-link">商家註冊審核</router-link></li>
             </ul>
           </li>
+
+          <!-- 管理員管理 -->
+          <li class="nav-item">
+            <router-link to="/admin/admins/list" class="nav-link" exact-active-class="active">
+              <i class="bi bi-house-door"></i>
+              <span v-if="!sidebarCollapsed">管理員列表</span>
+            </router-link>
+          </li>
+          
         </ul>
       </nav>
 

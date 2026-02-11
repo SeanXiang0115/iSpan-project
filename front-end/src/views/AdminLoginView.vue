@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
+import { adminAPI } from '@/api/admin';
 
 const router = useRouter();
 const account = ref('');
@@ -23,21 +24,42 @@ const handleLogin = async () => {
   try {
     console.log('Admin login attempt with:', loginData);
     
-    // 模擬登入延遲
-    await new Promise(resolve => setTimeout(resolve, 800));
+    const response = await adminAPI.login(loginData);
+    console.log('Admin login success:', response);
     
-    alert(`登入成功！(模擬)\n帳號: ${loginData.account}`);
+    // 取得 admin 資訊
+    const adminData = response.data.admin;
+    const accessToken = response.data.accessToken;
+    const refreshToken = response.data.refreshToken;
+    
+    console.log('========== Admin Info ==========');
+    console.log('Account:', adminData.account);
+    console.log('Name:', adminData.name);
+    console.log('Position:', adminData.position);
+    console.log('Access Token:', accessToken);
+    console.log('===============================');
+    
+    // 儲存 token 到 localStorage (或使用 Vuex/Pinia)
+    localStorage.setItem('adminAccessToken', accessToken);
+    localStorage.setItem('adminRefreshToken', refreshToken);
+    localStorage.setItem('adminAccount', adminData.account);
+    localStorage.setItem('adminName', adminData.name);
+    localStorage.setItem('adminPosition', adminData.position);
+    
+    alert(`登入成功！\n帳號: ${adminData.account}\n姓名: ${adminData.name}\n職位: ${adminData.position}`);
     
     // 登入成功後跳轉至後台首頁
     router.push('/admin');
     
   } catch (error) {
     console.error('Admin login failed:', error);
-    alert('登入失敗，請檢查帳號密碼');
+    const errorMsg = error.response?.data?.message || '登入失敗，請檢查帳號密碼';
+    alert(errorMsg);
   } finally {
     isSubmitting.value = false;
   }
 };
+
 </script>
 
 <template>

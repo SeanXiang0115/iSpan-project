@@ -203,12 +203,17 @@ const routes = [
         name: 'BackEndProductsStock',
         component: () => import('@/views/BackEndproductsStock.vue') // placeholder
       },
+      {
+        path: 'admins/list',
+        name: 'AdminsList',
+        component: () => import('@/views/AdminListView.vue') // placeholder
+      }
     ]
   },
   {
     path: '/admin/login',
     name: 'AdminLogin',
-    component: () => import('@/views/RegisterLoginView.vue'),
+    component: () => import('@/views/AdminLoginView.vue'),
     meta: { layout: 'blank' }
   },
   {
