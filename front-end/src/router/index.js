@@ -206,6 +206,12 @@ const routes = [
     ]
   },
   {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: () => import('@/views/RegisterLoginView.vue'),
+    meta: { layout: 'blank' }
+  },
+  {
     path: '/getusertest',
     name: 'GetUserTest',
     component: () => import('@/views/GetUserTestView.vue')
