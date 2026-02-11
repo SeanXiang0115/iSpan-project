@@ -4,8 +4,10 @@ import { useRouter } from 'vue-router';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import { adminAPI } from '@/api/admin';
+import { useAdminAuthStore } from '@/stores/adminAuth';
 
 const router = useRouter();
+const adminAuthStore = useAdminAuthStore();
 const account = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
@@ -15,7 +17,6 @@ const handleLogin = async () => {
   
   isSubmitting.value = true;
   
-  // 預留之後串接後端，按下登入後提供管理員輸入的account，password
   const loginData = {
     account: account.value,
     password: password.value
@@ -27,7 +28,7 @@ const handleLogin = async () => {
     const response = await adminAPI.login(loginData);
     console.log('Admin login success:', response);
     
-    // 取得 admin 資訊
+    // 取得 admin 資訊及其 token
     const adminData = response.data.admin;
     const accessToken = response.data.accessToken;
     const refreshToken = response.data.refreshToken;
@@ -36,15 +37,10 @@ const handleLogin = async () => {
     console.log('Account:', adminData.account);
     console.log('Name:', adminData.name);
     console.log('Position:', adminData.position);
-    console.log('Access Token:', accessToken);
     console.log('===============================');
     
-    // 儲存 token 到 localStorage (或使用 Vuex/Pinia)
-    localStorage.setItem('adminAccessToken', accessToken);
-    localStorage.setItem('adminRefreshToken', refreshToken);
-    localStorage.setItem('adminAccount', adminData.account);
-    localStorage.setItem('adminName', adminData.name);
-    localStorage.setItem('adminPosition', adminData.position);
+    // 使用 Pinia store 進行登入狀態管理
+    adminAuthStore.login(adminData, accessToken, refreshToken);
     
     alert(`登入成功！\n帳號: ${adminData.account}\n姓名: ${adminData.name}\n職位: ${adminData.position}`);
     

@@ -151,10 +151,25 @@
         </div>
 
         <div class="header-right">
-          <div class="user-menu">
-            <img src="https://via.placeholder.com/40" alt="User" class="user-avatar">
-            <span class="user-name">管理員</span>
-            <i class="bi bi-chevron-down"></i>
+          <div class="user-menu-container">
+            <div class="user-menu">
+              <!-- <img src="https://via.placeholder.com/40" alt="User" class="user-avatar"> -->
+              <span class="user-name">{{ adminName || '管理員' }}</span>
+              <i class="bi bi-chevron-down"></i>
+            </div>
+            
+            <!-- Dropdown Menu -->
+            <div class="user-dropdown">
+              <a href="#" class="dropdown-item">
+                <i class="bi bi-person-gear"></i>
+                編輯個人資料
+              </a>
+              <div class="dropdown-divider"></div>
+              <a href="#" class="dropdown-item text-danger" @click.prevent="handleLogout">
+                <i class="bi bi-box-arrow-right"></i>
+                登出
+              </a>
+            </div>
           </div>
         </div>
       </header>
@@ -169,12 +184,20 @@
 
 <script>
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { useAdminAuthStore } from '@/stores/adminAuth';
+import { storeToRefs } from 'pinia';
 
 export default {
   name: 'AdminLayout',
   setup() {
     const route = useRoute();
+    const router = useRouter();
+    const adminAuthStore = useAdminAuthStore();
+    
+    // 使用 storeToRefs 保持響應性
+    const { adminName } = storeToRefs(adminAuthStore);
+    
     const sidebarCollapsed = ref(false);
     const openSubmenu = ref(null);
 
@@ -188,6 +211,13 @@ export default {
     const toggleSubmenu = (menu) => {
       openSubmenu.value = openSubmenu.value === menu ? null : menu;
     };
+    
+    const handleLogout = () => {
+      if (confirm('確定要登出嗎？')) {
+        adminAuthStore.logout();
+        router.push('/admin/login');
+      }
+    };
 
     const currentSection = computed(() => {
       const path = route.path;
@@ -197,6 +227,7 @@ export default {
       if (path.includes('/admin/products')) return '商品管理';
       if (path.includes('/admin/sales')) return '銷售管理';
       if (path.includes('/admin/users')) return '使用者管理';
+      if (path.includes('/admin/admins')) return '管理員管理';
       return '';
     });
 
@@ -208,6 +239,7 @@ export default {
       if (path.includes('/orders')) return '訂單管理';
       if (path.includes('/reports')) return '報表';
       if (path.includes('/admin/users/list')) return '使用者列表';
+      if (path.includes('/admin/admins/list')) return '管理員列表';
       return 'ERP格式轉換';
     });
 
@@ -217,7 +249,9 @@ export default {
       toggleSidebar,
       toggleSubmenu,
       currentSection,
-      currentPage
+      currentPage,
+      adminName,
+      handleLogout
     };
   }
 };
@@ -504,6 +538,16 @@ export default {
   align-items: center;
   gap: 1rem;
 
+  .user-menu-container {
+    position: relative;
+    
+    &:hover .user-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+  }
+
   .user-menu {
     display: flex;
     align-items: center;
@@ -533,6 +577,57 @@ export default {
     i {
       font-size: 0.75rem;
       color: #9ca3af;
+    }
+  }
+  
+  .user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 200px;
+    background-color: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 0.5rem 0;
+    margin-top: 0.5rem;
+    z-index: 50;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: #374151;
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: background-color 0.2s;
+      
+      i {
+        font-size: 1.1rem;
+      }
+      
+      &:hover {
+        background-color: #f3f4f6;
+      }
+      
+      &.text-danger {
+        color: #ef4444;
+        
+        &:hover {
+          background-color: #fef2f2;
+        }
+      }
+    }
+    
+    .dropdown-divider {
+      height: 1px;
+      background-color: #e5e7eb;
+      margin: 0.5rem 0;
     }
   }
 }
