@@ -202,6 +202,10 @@ const routes = [
         path: 'backEnd/productsOrders',
         name: 'BackEndproductsOrders',
         component: () => import('@/views/BackEndproductsOrders.vue')
+      }, {
+        path: '/feedbackAP',
+        name: 'FeedbackAP',
+        component: () => import('@/views/FeedbackAPView.vue') // placeholder
       },
     ]
   },
@@ -216,7 +220,11 @@ const routes = [
 // 建立router
 const router = createRouter({
   history: createWebHistory(),
-  routes: routes
+  routes: routes,
+  scrollBehavior(to, from, savedPosition) {
+    // 始終滾動到頂部
+    return { top: 0 }
+  }
 });
 
 

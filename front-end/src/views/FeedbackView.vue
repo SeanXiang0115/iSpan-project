@@ -7,8 +7,8 @@
           <i class="bi bi-chat-dots"></i>
         </div>
         <div class="header-text">
-          <h1 class="page-title">客戶回饋</h1>
-          <p class="page-subtitle">您的意見對我們很重要，感謝您撥冗填寫</p>
+          <h1 class="page-title">意見回饋</h1>
+          <p class="page-subtitle">您的回饋對我們很重要，感謝您撥冗填寫</p>
         </div>
       </div>
     </div>
@@ -22,7 +22,7 @@
           <div>
             <strong>感謝您的回饋！</strong>
             <p>回報編號：<span class="report-number">{{ reportNumber }}</span></p>
-            <p>我們已收到您的意見，確認信已寄送至您的電子郵件</p>
+            <p>確認信已寄送至您的電子郵件</p>
           </div>
         </div>
 
