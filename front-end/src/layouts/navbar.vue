@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
+import Swal from 'sweetalert2';
 
 
 const router = useRouter();
@@ -15,6 +16,25 @@ const goTo = (path) => {
 const handleLogout = () => {
   authStore.logout();
   router.push('/login');
+};
+
+const handleMerchantApplication = () => {
+  if (!authStore.isLoggedIn) {
+    Swal.fire({
+      icon: 'warning',
+      title: '請先登入',
+      text: '您需要登入會員才能申請成為商家',
+      confirmButtonText: '前往登入',
+      showCancelButton: true,
+      cancelButtonText: '取消'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        router.push('/login');
+      }
+    });
+    return;
+  }
+  router.push('/storeRegistration');
 };
 
 </script>
@@ -95,7 +115,7 @@ const handleLogout = () => {
           </li>
 
           <li class="nav-item">
-            <a class="nav-link" href="#" @click.prevent="goTo('/storeRegistration')">申請成為商家</a>
+            <a class="nav-link" href="#" @click.prevent="handleMerchantApplication">申請成為商家</a>
           </li>
         </ul>
 
