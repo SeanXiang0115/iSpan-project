@@ -29,6 +29,7 @@ public class Booking {
     @Column(nullable = false)
     private Integer reservedSeatType;
 
+    @Column
     private Integer guestCount;
 
     @Column(nullable = false, length = 50)

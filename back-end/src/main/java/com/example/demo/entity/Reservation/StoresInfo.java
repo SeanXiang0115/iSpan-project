@@ -21,31 +21,31 @@ public class StoresInfo {
     @JoinColumn(name = "user_id")
     private User user; // 引用你第一部分的 User Entity
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String storeName;
 
-    @Column(nullable = false, length = 2048)
+    @Column(length = 2048)
     private String coverImage;
 
-    @Column(nullable = false, length = 20)
+    @Column(length = 20)
     private String storePhone;
 
     @Column(columnDefinition = "nvarchar(1000)")
     private String description;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String address;
 
-    @Column(nullable = false, precision = 10, scale = 8)
+    @Column(precision = 10, scale = 8)
     private BigDecimal latitude;
 
-    @Column(nullable = false, precision = 11, scale = 8)
+    @Column(precision = 11, scale = 8)
     private BigDecimal longitude;
 
-    @Column(nullable = false)
+    @Column
     private Integer timeSlot = 30;
 
-    @Column(nullable = false)
+    @Column
     private Integer timeLimit = 90;
 
     @OneToMany(mappedBy = "store", cascade = CascadeType.ALL)
