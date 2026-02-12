@@ -19,21 +19,6 @@ const handleLogout = () => {
 };
 
 const handleMerchantApplication = () => {
-  if (!authStore.isLoggedIn) {
-    Swal.fire({
-      icon: 'warning',
-      title: '請先登入',
-      text: '您需要登入會員才能申請成為商家',
-      confirmButtonText: '前往登入',
-      showCancelButton: true,
-      cancelButtonText: '取消'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        router.push('/login');
-      }
-    });
-    return;
-  }
   router.push('/storeRegistration');
 };
 
