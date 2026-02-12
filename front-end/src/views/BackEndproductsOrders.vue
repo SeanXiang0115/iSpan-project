@@ -36,7 +36,7 @@ const deleteOrder = (id) => {
     })
 }
 
-//5.顯示商品明細
+
 </script>
 
 <template>
