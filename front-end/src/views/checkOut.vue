@@ -97,6 +97,7 @@ const validateEmail= ()  =>{
     })
 }
 
+//增加檢核e-mail
 
 </script>
 
@@ -126,7 +127,7 @@ const validateEmail= ()  =>{
                             <label>電子信箱</label>
                             <input  v-model="orderForm.email" type="validateEmail.email handleCheckout" class="form-control" >
                             <span style="color: #cdbabab4;">example@mail.com</span>
-
+                        
                         </div>
                         <br>
                         <div class="form-group">
