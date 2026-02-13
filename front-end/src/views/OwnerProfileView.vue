@@ -1,13 +1,34 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import SelectLabel from '@/components/SelectLabel.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import Swal from 'sweetalert2';
+import storeAPI from '@/api/store';
 
 const isEditing = ref(false);
 
+const storeName = ref('載入中...');
 const storeDescription = ref('請輸入店家資訊與簡介...');
 const myLabels = ref([]);
+
+const fetchStoreInfo = async () => {
+  try {
+    const data = await storeAPI.getMyStoreInfo();
+    if (data) {
+      storeName.value = data.storeName || '未命名店家';
+      storeDescription.value = data.description || '請輸入店家資訊與簡介...';
+    }
+  } catch (error) {
+    console.error('獲取店家資訊失敗:', error);
+    if (error.response && error.response.status === 403) {
+      Swal.fire('權限不足', '您目前不具備店家身分', 'error');
+    }
+  }
+};
+
+onMounted(() => {
+  fetchStoreInfo();
+});
 
 const addLabel = (newLabel) => {
   if (!myLabels.value.includes(newLabel)) {
@@ -19,13 +40,22 @@ const removeLabel = (index) => {
   myLabels.value.splice(index, 1);
 };
 
-const handleSave = () => {
-  Swal.fire({
-    icon: 'success',
-    title: '成功儲存資訊！',
-    confirmButtonText: '確定',
-  });
-  isEditing.value = false;
+const handleSave = async () => {
+  try {
+    await storeAPI.updateMyStoreInfo({
+      storeName: storeName.value
+    });
+
+    Swal.fire({
+      icon: 'success',
+      title: '成功儲存資訊！',
+      confirmButtonText: '確定',
+    });
+    isEditing.value = false;
+  } catch (error) {
+    console.error('儲存店家資訊失敗:', error);
+    Swal.fire('儲存失敗', error.response?.data || '發生未知錯誤', 'error');
+  }
 };
 </script>
 
@@ -33,8 +63,19 @@ const handleSave = () => {
   <div class="container py-4">
     <h1 class="text-gdg mb-4">店家資訊編輯頁面</h1>
 
+    <div class="store-name-section mb-4">
+      <div v-if="!isEditing">
+        <h2 class="h3 fw-bold text-gdg">{{ storeName }}</h2>
+      </div>
+      <div v-else>
+        <label class="form-label text-gdg fw-bold">店家名稱：</label>
+        <input type="text" v-model="storeName" class="form-control border-gdg" placeholder="請輸入店家名稱" />
+      </div>
+    </div>
+
     <div class="info-section mb-4">
       <div v-if="!isEditing">
+        <label class="form-label text-gdg fw-bold">店家簡介：</label>
         <p class="p-3 border bg-light">{{ storeDescription }}</p>
       </div>
       <div v-else>
