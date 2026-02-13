@@ -63,6 +63,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 允許訪問認證相關端點
                         .requestMatchers("/api/auth/**").permitAll()
+                        // 允許訪問管理員端點（暫時開放，後續可改為需要 ADMIN 權限）
+                        .requestMatchers("/api/admins/**").permitAll()
                         // OAuth2 登入端點
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         // 管理員權限端點

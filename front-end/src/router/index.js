@@ -30,11 +30,13 @@ const routes = [
     path: '/userInfo',
     name: 'UserInfo',
     component: () => import('@/views/UserInfoView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/storeRegistration',
     name: 'StoreRegistration',
     component: () => import('@/views/StoreRegistrationView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/shopStore',
@@ -64,17 +66,20 @@ const routes = [
   {
     path: '/owner/storeInfo',
     name: 'OwnerStoreInfo',
-    component: () => import('@/views/OwnerProfileView.vue')
+    component: () => import('@/views/OwnerProfileView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/owner/bookings/seats',
     name: 'Seats',
-    component: () => import('@/views/SeatsAndTimeView.vue')
+    component: () => import('@/views/SeatsAndTimeView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/owner/bookings/data',
     name: 'Data',
-    component: () => import('@/views/BookingDataView.vue')
+    component: () => import('@/views/BookingDataView.vue'),
+    meta: { requiresAuth: true }
   },
   // {
   //   path: '/home',
@@ -207,7 +212,18 @@ const routes = [
         name: 'FeedbackAP',
         component: () => import('@/views/FeedbackAPView.vue') // placeholder
       },
+      {
+        path: 'admins/list',
+        name: 'AdminsList',
+        component: () => import('@/views/AdminListView.vue') // placeholder
+      }
     ]
+  },
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: () => import('@/views/AdminLoginView.vue'),
+    meta: { layout: 'blank' }
   },
   {
     path: '/getusertest',
@@ -228,5 +244,26 @@ const router = createRouter({
 });
 
 
+
+import { useAuthStore } from '@/stores/auth';
+import Swal from 'sweetalert2';
+
+// 路由守衛
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore();
+
+  if (to.meta.requiresAuth) {
+    if (authStore.isExpired) {
+      await authStore.handleLogoutAndNotify('timeout');
+      return next('/login');
+    }
+
+    if (!authStore.isLoggedIn) {
+      await authStore.handleLogoutAndNotify('unauthorized');
+      return next('/login');
+    }
+  }
+  next();
+});
 
 export default router;

@@ -56,8 +56,8 @@ const handleLogin = async () => {
     
     alert(`登入成功！\n你好, ${authStore.userName}\n角色: ${role}`);
     
-    // 導向首頁或 dashboard
-    // router.push('/');
+    // 導向首頁或 dashboard+
+    router.push('/');
     
   } catch (error) {
     console.error('Login failed:', error);

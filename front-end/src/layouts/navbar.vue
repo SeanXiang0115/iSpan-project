@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
+import Swal from 'sweetalert2';
 
 
 const router = useRouter();
@@ -15,6 +16,10 @@ const goTo = (path) => {
 const handleLogout = () => {
   authStore.logout();
   router.push('/login');
+};
+
+const handleMerchantApplication = () => {
+  router.push('/storeRegistration');
 };
 
 </script>
@@ -95,7 +100,7 @@ const handleLogout = () => {
           </li>
 
           <li class="nav-item">
-            <a class="nav-link" href="#" @click.prevent="goTo('/storeRegistration')">申請成為商家</a>
+            <a class="nav-link" href="#" @click.prevent="handleMerchantApplication">申請成為商家</a>
           </li>
         </ul>
 

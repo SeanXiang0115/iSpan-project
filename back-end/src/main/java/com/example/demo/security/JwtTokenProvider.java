@@ -38,19 +38,23 @@ public class JwtTokenProvider {
                     return authority.startsWith("ROLE_") ? authority.substring(5) : authority;
                 })
                 .orElse("USER");
-        return generateToken(userPrincipal.getUsername(), role, accessTokenExpirationMs);
+        return generateToken(userPrincipal.getUsername(), role, null, accessTokenExpirationMs);
     }
 
     public String generateAccessToken(String email, String role) {
-        return generateToken(email, role, accessTokenExpirationMs);
+        return generateToken(email, role, null, accessTokenExpirationMs);
+    }
+
+    public String generateAccessToken(String email, String role, String position) {
+        return generateToken(email, role, position, accessTokenExpirationMs);
     }
 
     public String generateRefreshToken(String email) {
         // Refresh token 通常不需要包含 role，但如果需要也可以加
-        return generateToken(email, null, refreshTokenExpirationMs);
+        return generateToken(email, null, null, refreshTokenExpirationMs);
     }
 
-    private String generateToken(String email, String role, long expirationMs) {
+    private String generateToken(String email, String role, String position, long expirationMs) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
 
@@ -64,17 +68,34 @@ public class JwtTokenProvider {
             builder.claim("role", role);
         }
 
+        if (position != null) {
+            builder.claim("position", position);
+        }
+
         return builder.compact();
     }
 
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
+        Claims claims = getClaims(token);
+        return claims.getSubject();
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("role", String.class);
+    }
+
+    public String getPositionFromToken(String token) {
+        Claims claims = getClaims(token);
+        return claims.get("position", String.class);
+    }
+
+    private Claims getClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return claims.getSubject();
     }
 
     public boolean validateToken(String token) {

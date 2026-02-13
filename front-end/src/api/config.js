@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Swal from 'sweetalert2';
 
 // Create an axios instance with custom config
 const api = axios.create({
@@ -32,6 +33,18 @@ api.interceptors.response.use(
     },
     (error) => {
         // Handle global errors here
+        if (error.response && error.response.status === 401) {
+            // Unauthorized or Token Expired
+            console.error('Session expired or unauthorized');
+
+            const authStore = useAuthStore();
+            authStore.handleLogoutAndNotify('timeout').then(() => {
+                if (typeof window !== 'undefined') {
+                    window.location.href = '/login';
+                }
+            });
+        }
+
         console.error('API Error:', error.response || error.message);
         return Promise.reject(error);
     }
