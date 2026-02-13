@@ -3,9 +3,11 @@ import { useCartStore } from '@/stores/cart'
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
 import Swal from 'sweetalert2'
+import { useOrderDepot } from '@/stores/orderDepot.js'
 
 const cartStore = useCartStore()
 const router = useRouter()
+const orderDepot = useOrderDepot()
 
 
 
@@ -26,10 +28,30 @@ const handleCheckout = () => {
         return
     }
 
+const validateEmail= ()  =>{
+    this.email = this.email.replace(/[^\w@.-]/g, '');
+}
+
+
+
     if (cartStore.items.length === 0) {
         Swal.fire('錯誤', '購物車是空的', 'error')
         return
     }
+
+    //建立訂單狀態為待付款、已付款、出貨中、已完成
+    const getOrderStatus = () =>{
+        if(orderForm.value.paymentMethod === 'credit_card') {
+            return '待付款'
+        } else if (orderForm.value.paymentMethod === 'cod') {
+            return '待出貨'
+        } else {
+            return '待付款' // 預設
+        }
+    } 
+
+    const currentStatus= getOrderStatus();
+
 
     // 這裡模擬送出訂單
     Swal.fire({
@@ -41,17 +63,42 @@ const handleCheckout = () => {
         cancelButtonText: '再檢查一下'
     }).then((result) => {
         if (result.isConfirmed ) {
-            // 💡 提示：之後串綠界時，這裡會呼叫後端 API 取得綠界的導向表單
-            Swal.fire('成功', '訂單已建立！', 'success'),
+            // 💡 之後串綠界時，這裡會呼叫後端 API 取得綠界的導向表單
+            
+            orderDepot.addOrder({
+                customer:{...orderForm.value},
+                totalPrice: cartStore.totalPrice,
+                status: currentStatus,
+                items: cartStore.items.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity
+                })),
+
+            })
+
+            console.log('目前的訂單總數：', orderDepot.orders.length); // 這裡應該會顯示 1 以上
+
+            Swal.fire('成功', `訂單已建立！狀態為：${currentStatus}`, 'success')
+
+            // 清空購物車
+            cartStore.items = []
+            cartStore.saveToStorage ? cartStore.saveToStorage() : null
+            
             router.push('/shopStore')
             // 測試用：清空購物車並導回首頁
             // cartStore.items = []
             // cartStore.saveToStorage()
             // router.push('/shopStore')
+
         }
         
     })
 }
+
+//增加檢核e-mail
+
 </script>
 
 <template>
@@ -66,27 +113,27 @@ const handleCheckout = () => {
                         <div class="form-group">
                             <label>姓名 *</label>
                             <input v-model="orderForm.name" type="text" class="form-control"  >
-                            <placeholder style="color: #cdbabab4;">請輸入收件人姓名</placeholder>
+                            <span style="color: #cdbabab4;">請輸入收件人姓名</span>
                         </div>
                         <br>
                         <div class="form-group">
                             <label>手機號碼 *</label>
                             <input v-model="orderForm.phone" type="tel" class="form-control" >
-                            <placeholder style="color: #cdbabab4;">ex:0912345678</placeholder>
+                            <span style="color: #cdbabab4;">ex:0912345678</span>
 
                         </div>
                         <br>
                         <div class="form-group">
                             <label>電子信箱</label>
-                            <input v-model="orderForm.email" type="email" class="form-control" >
-                            <placeholder style="color: #cdbabab4;">example@mail.com</placeholder>
-
+                            <input  v-model="orderForm.email" type="validateEmail.email handleCheckout" class="form-control" >
+                            <span style="color: #cdbabab4;">example@mail.com</span>
+                        
                         </div>
                         <br>
                         <div class="form-group">
                             <label>收件地址 *</label>
                             <input v-model="orderForm.address" type="text" class="form-control" >
-                            <placeholder style="color: #cdbabab4;">請輸入詳細地址</placeholder>
+                            <span style="color: #cdbabab4;">請輸入詳細地址</span>
                             
                         </div>
                         <br>
@@ -124,7 +171,8 @@ const handleCheckout = () => {
                     <div class="card-body p-0">
                         <ul class="order-list">
                             <li v-for="item in cartStore.items" :key="item.id" class="order-item">
-                                <img :src="item.image" class="item-thumb">
+                                <img :src="item.image" class="item-thumb" @error="(e) => e.target.src = 'https://placehold.jp/24/cccccc/ffffff/50x50.png?text=無圖'">
+                                
                                 <div class="item-info">
                                     <p class="item-name">{{ item.name }}</p>
                                     <p class="item-price">NT$ {{ item.price }} x {{ item.quantity }}</p>

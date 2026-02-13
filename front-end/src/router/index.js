@@ -201,12 +201,16 @@ const routes = [
       {
         path: 'backEnd/productsList',
         name: 'BackEndProductsList',
-        component: () => import('@/views/BackEndProductsList.vue') // placeholder
+        component: () => import('@/views/BackEndProductsList.vue')
       },
       {
-        path: 'backEnd/productsStock',
-        name: 'BackEndProductsStock',
-        component: () => import('@/views/BackEndproductsStock.vue') // placeholder
+        path: 'backEnd/productsOrders',
+        name: 'BackEndproductsOrders',
+        component: () => import('@/views/BackEndproductsOrders.vue')
+      }, {
+        path: '/feedbackAP',
+        name: 'FeedbackAP',
+        component: () => import('@/views/FeedbackAPView.vue') // placeholder
       },
       {
         path: 'admins/list',
@@ -232,7 +236,11 @@ const routes = [
 // 建立router
 const router = createRouter({
   history: createWebHistory(),
-  routes: routes
+  routes: routes,
+  scrollBehavior(to, from, savedPosition) {
+    // 始終滾動到頂部
+    return { top: 0 }
+  }
 });
 
 

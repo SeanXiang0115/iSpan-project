@@ -4,6 +4,7 @@
 // import DefaultLayout from '@/layouts/default.vue';
 // import BlankLayout from '@/layouts/blank.vue';
 import Navbar from '@/layouts/navbar.vue';
+import Footer from '@/layouts/footer.vue';
 // const route = useRoute();
 
 // const layout = computed(() => {
@@ -18,6 +19,7 @@ import Navbar from '@/layouts/navbar.vue';
     <RouterView />
   </component> -->
   <RouterView />
+  <Footer />
 </template>
 
 <style scoped></style>

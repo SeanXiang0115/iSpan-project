@@ -50,7 +50,7 @@ const handleMerchantApplication = () => {
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <!-- Template 1: Simple Button -->
           <li class="nav-item">
-            <a class="nav-link" href="#" @click.prevent="goTo('/about')">關於我們</a>
+            <a class="nav-link" href="#" @click.prevent="goTo('/about')">島嶼初心</a>
           </li>
 
           <!-- Template 2: Hover Dropdown -->

@@ -87,18 +87,25 @@
 
           <!-- anna 商品管理 -->
           <li class="nav-item has-submenu">
-            <a href="#" class="nav-link" @click.prevent="toggleSubmenu('products')">
-              <i class="bi bi-box-seam"></i>
-              <span v-if="!sidebarCollapsed">Anna商品管理</span>
-              <i v-if="!sidebarCollapsed" class="bi bi-chevron-down submenu-arrow" :class="{ rotated: openSubmenu === 'products' }"></i>
-            </a>
-            <ul class="submenu" v-if="!sidebarCollapsed && openSubmenu === 'products'">
-              <li><router-link to="/admin/backEnd/productsList" class="submenu-link">商品管理</router-link></li>
-              <li><router-link to="/admin/backEnd/productsStock" class="submenu-link">庫存管理</router-link></li>
-              
-            </ul>
+              <a href="#" class="nav-link" @click.prevent="toggleSubmenu('products')">
+                  <i class="bi bi-box-seam"></i>
+                  <span v-if="!sidebarCollapsed">Anna商品管理</span>
+                  <i v-if="!sidebarCollapsed" class="bi bi-chevron-down submenu-arrow" :class="{ rotated: openSubmenu === 'products' }"></i>
+              </a>
+              <ul class="submenu" v-if="!sidebarCollapsed && openSubmenu === 'products'">
+                  <li><router-link to="/admin/backEnd/productsList" class="submenu-link">商品管理</router-link></li>
+                  <li><router-link to="/admin/backEnd/productsOrders" class="submenu-link">訂單管理</router-link></li>
+              </ul>
           </li>
 
+
+          <!-- 客服管理 -->
+          <li class="nav-item">
+            <router-link to="/feedbackAP" class="nav-link">
+              <i class="bi bi-headset"></i>
+              <span v-if="!sidebarCollapsed">客服管理</span>
+            </router-link>
+          </li>
 
           <!-- 使用者管理 -->
           <li class="nav-item has-submenu">
@@ -228,6 +235,7 @@ export default {
       if (path.includes('/admin/sales')) return '銷售管理';
       if (path.includes('/admin/users')) return '使用者管理';
       if (path.includes('/admin/admins')) return '管理員管理';
+      if (path.includes('/feedbackAP')) return '客服管理';
       return '';
     });
 
