@@ -1,43 +1,102 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
+import Swal from 'sweetalert2';
+
+const route = useRoute();
+const router = useRouter();
 
 const form = reactive({
   ownerName: '',
   storePhone: '',
-  storeAddress: ''
+  storeAddress: '',
+  storeName: ''
 });
 
 const isSubmitting = ref(false);
+const isEditMode = ref(false);
+const registrationId = ref(null);
+
+onMounted(async () => {
+    // Check if there is an id in query for edit mode
+    if (route.query.id) {
+        isEditMode.value = true;
+        registrationId.value = route.query.id;
+        await fetchRegistrationData(route.query.id);
+    }
+});
+
+const fetchRegistrationData = async (id) => {
+    try {
+        // Assume we have an API to get specific registration or use the 'my' endpoint and find it
+        // Simpler: use the get-my-applications and find by ID, or if backend supports get-by-id for owner
+        // For now, let's try fetching from /api/store-registrations/my and filtering
+        const response = await axios.get('/api/store-registrations/my');
+        const registration = response.data.find(r => r.id == id);
+        
+        if (registration) {
+            form.ownerName = registration.name;
+            form.storePhone = registration.phone;
+            form.storeAddress = registration.address;
+            form.storeName = registration.storeName || '';
+        } else {
+            Swal.fire('錯誤', '找不到該申請資料', 'error');
+            router.push('/user-info'); // Redirect back
+        }
+    } catch (error) {
+        console.error('Failed to fetch data', error);
+        Swal.fire('錯誤', '載入資料失敗', 'error');
+    }
+};
 
 const handleSubmit = async () => {
   if (isSubmitting.value) return;
 
   isSubmitting.value = true;
   
-  // Create a copy of the data for logging/alerting
   const submissionData = { ...form };
 
   try {
-    console.log('Submitting registration data:', submissionData);
-    
-    // Placeholder for API endpoint
-    // In a real scenario, this would be something like:
-    // const response = await axios.post('/api/store/register', submissionData);
-    
-    // Alert the JSON data as requested for verification
-    alert(`商家註冊申請已送出 (JSON 預覽):\n${JSON.stringify(submissionData, null, 2)}`);
-    
-    // Reset form after success (conditional based on actual API result)
-    // form.ownerName = '';
-    // form.storePhone = '';
-    // form.storeAddress = '';
+    let response;
+    if (isEditMode.value) {
+        response = await axios.put(`/api/store-registrations/${registrationId.value}`, submissionData);
+        Swal.fire({
+            title: '重送成功',
+            text: '您的申請已更新並重新送出審核',
+            icon: 'success',
+            confirmButtonText: '確定',
+            confirmButtonColor: '#9f9572'
+        }).then(() => {
+            router.push('/user-info');
+        });
+    } else {
+        response = await axios.post('/api/store-registrations', submissionData);
+        Swal.fire({
+            title: '申請已送出',
+            text: '我們已收到您的商家註冊申請，將盡快進行審核',
+            icon: 'success',
+            confirmButtonText: '確定',
+            confirmButtonColor: '#9f9572'
+        }).then(() => {
+            router.push('/user-info');
+        });
+    }
     
   } catch (error) {
     console.error('Registration failed:', error);
-    alert('註冊失敗，請稍後再試。');
+    const msg = error.response?.data?.error || '註冊失敗，請稍後再試。';
+    
+    // Check specific error messages from backend
+    if (msg.includes("already has a pending")) {
+        Swal.fire('重複申請', '您已有審核中或待處理的申請，請勿重複提交。', 'warning');
+    } else if (msg.includes("already a store")) {
+         Swal.fire('已是商家', '您已經是商家身分，無需再次申請。', 'info');
+    } else {
+        Swal.fire('錯誤', msg, 'error');
+    }
   } finally {
     isSubmitting.value = false;
   }
@@ -52,7 +111,7 @@ const handleSubmit = async () => {
           <BaseCard :shadow="true" :hoverEffect="false">
             <template #header>
               <div class="text-center py-2">
-                <h2 class="text-gdg fw-bold mb-0">申請成為商家</h2>
+                <h2 class="text-gdg fw-bold mb-0">{{ isEditMode ? '修改商家申請' : '申請成為商家' }}</h2>
                 <p class="text-muted small mt-2">請填寫以下資訊完成註冊申請</p>
               </div>
             </template>
@@ -67,6 +126,17 @@ const handleSubmit = async () => {
                   class="form-control custom-input" 
                   placeholder="請輸入負責人姓名" 
                   required
+                >
+              </div>
+
+              <div class="mb-4">
+                <label for="storeName" class="form-label fw-bold text-dark">商家名稱</label>
+                <input 
+                  type="text" 
+                  id="storeName" 
+                  v-model="form.storeName" 
+                  class="form-control custom-input" 
+                  placeholder="請輸入商家名稱 (選填)" 
                 >
               </div>
 
@@ -102,7 +172,7 @@ const handleSubmit = async () => {
                   class="fw-bold" 
                   :disabled="isSubmitting"
                 >
-                  {{ isSubmitting ? '處理中...' : '提交註冊申請' }}
+                  {{ isSubmitting ? '處理中...' : (isEditMode ? '更新並重新送出' : '提交註冊申請') }}
                 </BaseButton>
               </div>
             </form>
