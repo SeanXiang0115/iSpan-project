@@ -69,7 +69,7 @@ public class UserService {
         userRepository.delete(user);
     }
 
-    private User getCurrentUserEntity() {
+    public User getCurrentUserEntity() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
 

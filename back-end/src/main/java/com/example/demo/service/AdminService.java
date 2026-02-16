@@ -109,4 +109,13 @@ public class AdminService {
                 .enabled(admin.getEnabled())
                 .build();
     }
+
+    public Admin getCurrentAdmin() {
+        org.springframework.security.core.Authentication authentication = org.springframework.security.core.context.SecurityContextHolder
+                .getContext().getAuthentication();
+        String account = authentication.getName();
+
+        return adminRepository.findByAccount(account)
+                .orElseThrow(() -> new RuntimeException("Admin not found with account: " + account));
+    }
 }
