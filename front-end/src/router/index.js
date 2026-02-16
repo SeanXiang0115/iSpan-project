@@ -30,7 +30,33 @@ const routes = [
     path: '/userInfo',
     name: 'UserInfo',
     component: () => import('@/views/UserInfoView.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
+    redirect: '/userInfo/profile', // Default redirect
+    children: [
+      {
+        path: 'profile',
+        name: 'UserProfile',
+        component: () => import('@/views/UserInfoContent.vue'),
+        props: { title: '個人資料' }
+      },
+      {
+        path: 'bookings',
+        name: 'UserBookingsTab',
+        component: () => import('@/views/UserInfoContent.vue'),
+        props: { title: '我的訂位' }
+      },
+      {
+        path: 'orders',
+        name: 'UserOrders',
+        component: () => import('@/views/UserInfoContent.vue'),
+        props: { title: '我的訂單' }
+      },
+      {
+        path: 'store-registration', // Child path
+        name: 'UserInfoStoreReg',
+        component: () => import('@/views/UserInfoStoreReg.vue')
+      }
+    ]
   },
   {
     path: '/storeRegistration',
