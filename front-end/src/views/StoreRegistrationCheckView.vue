@@ -73,14 +73,14 @@
               <td>{{ item.applytime }}</td>
               <td>
                 <span :class="['status-badge', getStatusClass(item.status)]">
-                  {{ item.status }}
+                  {{ getStatusDisplay(item.status) }}
                 </span>
               </td>
               <td>
                 <button 
                   class="btn-admin-outline-primary btn-sm" 
                   @click="openAuditModal(item)"
-                  :disabled="item.status === '已結案'"
+                  :disabled="item.status === 'APPROVED'"
                 >
                   <i class="bi bi-file-earmark-check me-1"></i>
                   審核
@@ -145,51 +145,85 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import storeRegistrationData from '@/data/storeRegistrationData.json';
 
-const registrations = ref(storeRegistrationData);
+const registrations = ref([]);
 const currentPage = ref(1);
 const pageSize = 10;
 const currentTab = ref('All');
+const totalItems = ref(0);
+const totalPages = ref(0);
+
+// Map frontend tabs to backend status enums
+const tabToStatusMap = {
+    'All': null,
+    '未處理': 'PENDING',
+    '退回中': 'RETURNED',
+    '已結案': 'APPROVED'
+};
 
 const setTab = (tab) => {
   currentTab.value = tab;
   currentPage.value = 1; // Reset to first page when switching tabs
+  fetchRegistrations();
 };
 
-// Computed: Filter logic
-const filteredData = computed(() => {
-  if (currentTab.value === 'All') {
-    return registrations.value;
-  }
-  return registrations.value.filter(item => item.status === currentTab.value);
+const fetchRegistrations = async () => {
+    try {
+        const status = tabToStatusMap[currentTab.value];
+        const params = {
+            page: currentPage.value - 1, // API is 0-indexed
+            size: pageSize
+        };
+        if (status) {
+            params.status = status;
+        }
+
+        const response = await axios.get('/api/store-registrations', { params });
+        registrations.value = response.data.content;
+        totalItems.value = response.data.totalElements;
+        totalPages.value = response.data.totalPages;
+
+    } catch (error) {
+        console.error('Error fetching registrations:', error);
+        Swal.fire('錯誤', '無法載入申請資料', 'error');
+    }
+};
+
+onMounted(() => {
+    fetchRegistrations();
 });
 
-// Computed: Pagination logic
-const totalItems = computed(() => filteredData.value.length);
-const totalPages = computed(() => Math.ceil(totalItems.value / pageSize));
 const startIndex = computed(() => (currentPage.value - 1) * pageSize);
-const endIndex = computed(() => startIndex.value + pageSize);
+const endIndex = computed(() => startIndex.value + registrations.value.length); // Display count for current page
 
-const paginatedData = computed(() => {
-  return filteredData.value.slice(startIndex.value, endIndex.value);
-});
+// Computed: Use registrations directly as it is now paginated from server
+const paginatedData = computed(() => registrations.value);
 
 // Helper for status badge class
 const getStatusClass = (status) => {
   switch (status) {
-    case '已結案':
+    case 'APPROVED': // Changed to match Backend Enum
         return 'status-active'; // Green
-    case '退回中':
+    case 'RETURNED': // Changed to match Backend Enum
         return 'status-banned'; // Red
-    case '未處理':
+    case 'PENDING': // Changed to match Backend Enum
         return 'status-pending'; // Amber
     default:
         return 'status-user'; // Gray
   }
+};
+
+// Map backend status to display text
+const getStatusDisplay = (status) => {
+    switch (status) {
+        case 'APPROVED': return '已結案';
+        case 'RETURNED': return '退回中';
+        case 'PENDING': return '未處理';
+        default: return status;
+    }
 };
 
 // Simple page range for pagination
@@ -212,27 +246,22 @@ const visiblePages = computed(() => {
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
+    fetchRegistrations();
   }
 };
 
 // Audit Logic
 const openAuditModal = async (item) => {
-  // Mock Data for demonstration since current JSON doesn't have these fields
-  const mockData = {
-    ownerName: item.name,
-    storePhone: '0912-345-678', // Placeholder
-    storeAddress: '台北市大安區復興南路一段390號' // Placeholder
-  };
-
   const { value: result } = await Swal.fire({
     title: `審核申請 #${item.id}`,
     html: `
       <div class="text-start">
         <div class="mb-3 p-3 bg-light rounded">
           <h6 class="fw-bold mb-2 border-bottom pb-2">申請人資料</h6>
-          <p class="mb-1"><strong>姓名:</strong> ${mockData.ownerName}</p>
-          <p class="mb-1"><strong>電話:</strong> ${mockData.storePhone}</p>
-          <p class="mb-0"><strong>地址:</strong> ${mockData.storeAddress}</p>
+          <p class="mb-1"><strong>姓名:</strong> ${item.name}</p>
+          <p class="mb-1"><strong>電話:</strong> ${item.phone}</p>
+          <p class="mb-0"><strong>地址:</strong> ${item.address}</p>
+          ${item.storeName ? `<p class="mb-0 mt-1"><strong>商家名稱:</strong> ${item.storeName}</p>` : ''}
         </div>
         <div class="mb-3">
           <label class="form-label fw-bold">審核意見</label>
@@ -261,7 +290,7 @@ const openAuditModal = async (item) => {
         return false;
       }
       return {
-        action: 'return',
+        action: 'reject', // Changed to match Backend API expectation
         opinion: opinion
       };
     }
@@ -269,21 +298,21 @@ const openAuditModal = async (item) => {
 
   if (result) {
     if (result.action === 'approve') {
-       handleApprove(item, mockData, result.opinion);
-    } else if (result.action === 'return') {
+       handleApprove(item, result.opinion);
+    } else if (result.action === 'reject') {
        handleReturn(item, result.opinion);
     }
   }
 };
 
-const handleApprove = async (item, data, opinion) => {
+const handleApprove = async (item, opinion) => {
   const confirmResult = await Swal.fire({
     title: '確認要同意這筆申請?',
     html: `
       <div class="text-start bg-light p-3 rounded small">
-        <p class="mb-1"><strong>姓名:</strong> ${data.ownerName}</p>
-        <p class="mb-1"><strong>電話:</strong> ${data.storePhone}</p>
-        <p class="mb-0"><strong>地址:</strong> ${data.storeAddress}</p>
+        <p class="mb-1"><strong>姓名:</strong> ${item.name}</p>
+        <p class="mb-1"><strong>電話:</strong> ${item.phone}</p>
+        <p class="mb-0"><strong>地址:</strong> ${item.address}</p>
       </div>
       <p class="mt-3 text-muted small">此操作將把案件狀態改為「已結案」</p>
     `,
@@ -296,27 +325,17 @@ const handleApprove = async (item, data, opinion) => {
 
   if (confirmResult.isConfirmed) {
     try {
-      // Mock API call
-      // await axios.post('/admin/store-registration/approve', { id: item.id, opinion });
+      await axios.put(`/api/store-registrations/${item.id}/review`, {
+          action: 'approve',
+          opinion: opinion
+      });
       
-      // Update local state
-      const index = registrations.value.findIndex(r => r.id === item.id);
-      if (index !== -1) {
-        registrations.value[index].status = '已結案';
-      }
-
       Swal.fire('已結案', '申請已成功同意', 'success');
-      
-      // Convert to JSON for backend handover (Simulated)
-      console.log('Backend Payload:', JSON.stringify({
-        id: item.id,
-        status: '已結案',
-        opinion: opinion,
-        reviewedAt: new Date().toISOString()
-      }, null, 2));
+      fetchRegistrations(); // Reload data
 
     } catch (error) {
-      Swal.fire('錯誤', '更新失敗', 'error');
+      console.error(error);
+      Swal.fire('錯誤', '更新失敗: ' + (error.response?.data?.error || error.message), 'error');
     }
   }
 };
@@ -342,27 +361,17 @@ const handleReturn = async (item, opinion) => {
 
   if (confirmResult.isConfirmed) {
     try {
-      // Mock API call
-      // await axios.post('/admin/store-registration/return', { id: item.id, opinion });
-      
-      // Update local state
-      const index = registrations.value.findIndex(r => r.id === item.id);
-      if (index !== -1) {
-        registrations.value[index].status = '退回中';
-      }
+      await axios.put(`/api/store-registrations/${item.id}/review`, {
+          action: 'reject',
+          opinion: opinion
+      });
 
       Swal.fire('已退回', '申請已退回給使用者', 'success');
-
-      // Convert to JSON for backend handover (Simulated)
-      console.log('Backend Payload:', JSON.stringify({
-        id: item.id,
-        status: '退回中',
-        opinion: opinion,
-        reviewedAt: new Date().toISOString()
-      }, null, 2));
+      fetchRegistrations(); // Reload data
 
     } catch (error) {
-      Swal.fire('錯誤', '更新失敗', 'error');
+       console.error(error);
+      Swal.fire('錯誤', '更新失敗: ' + (error.response?.data?.error || error.message), 'error');
     }
   }
 };
