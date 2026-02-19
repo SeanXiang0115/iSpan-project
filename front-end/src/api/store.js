@@ -10,10 +10,15 @@ export const storeAPI = {
 
     /**
      * 更新當前店家的資訊
-     * @param {Object} data - { storeName }
+     * @param {Object|FormData} data - 店家資訊物件或 FormData (包含圖片)
      */
     updateMyStoreInfo(data) {
-        return api.put('/owner/store/me', data);
+        const config = {};
+        if (data instanceof FormData) {
+            // 當資料是 FormData 時，覆蓋全域的 application/json 設定
+            config.headers = { 'Content-Type': 'multipart/form-data' };
+        }
+        return api.put('/owner/store/me', data, config);
     }
 };
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import SelectLabel from '@/components/SelectLabel.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import Swal from 'sweetalert2';
@@ -7,16 +7,51 @@ import storeAPI from '@/api/store';
 
 const isEditing = ref(false);
 
-const storeName = ref('載入中...');
-const storeDescription = ref('請輸入店家資訊與簡介...');
+const storeName = ref('');
+const storeDescription = ref('');
+const storePhone = ref('');
+const storeAddress = ref('');
 const myLabels = ref([]);
+const coverImage = ref(''); // 儲存資料庫回傳的檔名
+
+// 圖片上傳相關
+const selectedFile = ref(null);
+const imagePreview = ref(null);
+const fileInput = ref(null);
+const removeImageFlag = ref(false); // 標記是否刪除圖片
+
+// 用於儲存編輯前的原始資料
+const originalData = ref({
+  storeName: '',
+  description: '',
+  storePhone: '',
+  address: '',
+  coverImage: ''
+});
+
+// 計算圖片路徑
+const getImageUrl = (imgName) => {
+  if (!imgName || removeImageFlag.value) return 'https://placehold.co/600x400?text=No+Image';
+  // 圖片現在存放在 front-end/public/pictures/StoreProfile
+  // 在 Vite 中，public 資料夾的內容會映射到服務器的根目錄 /
+  return `/pictures/StoreProfile/${imgName}`;
+};
 
 const fetchStoreInfo = async () => {
   try {
-    const data = await storeAPI.getMyStoreInfo();
-    if (data) {
-      storeName.value = data.storeName || '未命名店家';
-      storeDescription.value = data.description || '請輸入店家資訊與簡介...';
+    const response = await storeAPI.getMyStoreInfo();
+    if (response && response.success) {
+      const data = response.data;
+      storeName.value = data.storeName || '';
+      storeDescription.value = data.description || '';
+      storePhone.value = data.storePhone || '';
+      storeAddress.value = data.address || '';
+      coverImage.value = data.coverImage || '';
+
+      // 重設上傳與刪除相關狀態
+      selectedFile.value = null;
+      imagePreview.value = null;
+      removeImageFlag.value = false;
     }
   } catch (error) {
     console.error('獲取店家資訊失敗:', error);
@@ -40,21 +75,125 @@ const removeLabel = (index) => {
   myLabels.value.splice(index, 1);
 };
 
+const startEditing = () => {
+  // 備份原始資料
+  originalData.value = {
+    storeName: storeName.value,
+    description: storeDescription.value,
+    storePhone: storePhone.value,
+    address: storeAddress.value,
+    coverImage: coverImage.value
+  };
+  isEditing.value = true;
+};
+
+const handleCancel = () => {
+  Swal.fire({
+    title: '確定要取消編輯嗎？',
+    text: '所有變更將不會被儲存',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#9f9572',
+    cancelButtonColor: '#d33',
+    confirmButtonText: '確定取消',
+    cancelButtonText: '繼續編輯'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // 還原原始資料
+      storeName.value = originalData.value.storeName;
+      storeDescription.value = originalData.value.description;
+      storePhone.value = originalData.value.storePhone;
+      storeAddress.value = originalData.value.address;
+      coverImage.value = originalData.value.coverImage;
+
+      // 清除預覽與旗標
+      selectedFile.value = null;
+      imagePreview.value = null;
+      removeImageFlag.value = false;
+      isEditing.value = false;
+    }
+  });
+};
+
+// 處理圖片選擇
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    // 檢查格式
+    if (!file.type.startsWith('image/')) {
+      Swal.fire('錯誤', '只能上傳圖片檔案', 'error');
+      event.target.value = '';
+      return;
+    }
+
+    selectedFile.value = file;
+    removeImageFlag.value = false; // 若選擇了新圖，則取消刪除標記
+    // 建立預覽圖
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+const triggerFileInput = () => {
+  fileInput.value.click();
+};
+
+const cancelImageUpload = () => {
+  selectedFile.value = null;
+  imagePreview.value = null;
+  if (fileInput.value) fileInput.value.value = '';
+};
+
+// 刪除目前圖片
+const removeCurrentImage = () => {
+  Swal.fire({
+    title: '確定要移除目前圖片嗎？',
+    text: '這將會在儲存後永久刪除圖片檔案',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    confirmButtonText: '預定移除',
+    cancelButtonText: '保留'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      removeImageFlag.value = true;
+      selectedFile.value = null;
+      imagePreview.value = null;
+    }
+  });
+};
+
 const handleSave = async () => {
   try {
-    await storeAPI.updateMyStoreInfo({
-      storeName: storeName.value
-    });
+    // 使用 FormData 以支援檔案上傳
+    const formData = new FormData();
+    formData.append('storeName', storeName.value);
+    formData.append('description', storeDescription.value);
+    formData.append('storePhone', storePhone.value);
+    formData.append('address', storeAddress.value);
+    formData.append('removeImage', removeImageFlag.value);
 
-    Swal.fire({
+    if (selectedFile.value) {
+      formData.append('imageFile', selectedFile.value);
+    }
+
+    await storeAPI.updateMyStoreInfo(formData);
+
+    await Swal.fire({
       icon: 'success',
       title: '成功儲存資訊！',
       confirmButtonText: '確定',
     });
+
+    // 重新取得資訊以更新圖片路徑 (檔名會變)
+    await fetchStoreInfo();
     isEditing.value = false;
   } catch (error) {
     console.error('儲存店家資訊失敗:', error);
-    Swal.fire('儲存失敗', error.response?.data || '發生未知錯誤', 'error');
+    Swal.fire('儲存失敗', error.response?.data?.message || '發生錯誤，請確認資料格式是否正確。', 'error');
   }
 };
 </script>
@@ -63,13 +202,34 @@ const handleSave = async () => {
   <div class="container py-4">
     <h1 class="text-gdg mb-4">店家資訊編輯頁面</h1>
 
+    <!-- 店家封面圖片區域 -->
+    <div class="store-image-section mb-4">
+      <label class="form-label text-gdg fw-bold">店家封面圖片：</label>
+      <div class="image-container position-relative mb-2">
+        <img :src="imagePreview || getImageUrl(coverImage)" class="img-fluid border rounded" alt="Store Cover"
+          style="max-height: 400px; width: 100%; object-fit: contain; background-color: #f8f9fa;">
+
+        <div v-if="isEditing" class="mt-2 d-flex gap-2">
+          <BaseButton color="gdg" @click="triggerFileInput">選擇圖片</BaseButton>
+          <input type="file" ref="fileInput" @change="handleFileChange" accept="image/*" class="d-none">
+
+          <BaseButton v-if="selectedFile" color="info" @click="cancelImageUpload">取消選擇</BaseButton>
+          <BaseButton v-if="coverImage && !removeImageFlag" color="danger" @click="removeCurrentImage">刪除目前圖片
+          </BaseButton>
+          <BaseButton v-if="removeImageFlag" color="gdg" @click="removeImageFlag = false">復原圖片</BaseButton>
+        </div>
+      </div>
+      <p v-if="selectedFile" class="text-muted small">已選擇檔案: {{ selectedFile.name }}</p>
+      <p v-if="removeImageFlag" class="text-danger small fw-bold">目前已標記為刪除，儲存後將生效。</p>
+    </div>
+
     <div class="store-name-section mb-4">
       <div v-if="!isEditing">
         <h2 class="h3 fw-bold text-gdg">{{ storeName }}</h2>
       </div>
       <div v-else>
         <label class="form-label text-gdg fw-bold">店家名稱：</label>
-        <input type="text" v-model="storeName" class="form-control border-gdg" placeholder="請輸入店家名稱" />
+        <input type="text" v-model="storeName" class="form-control border-gdg" />
       </div>
     </div>
 
@@ -80,7 +240,29 @@ const handleSave = async () => {
       </div>
       <div v-else>
         <label class="form-label text-gdg fw-bold">編輯簡介：</label>
-        <input type="text" v-model="storeDescription" class="form-control border-gdg" placeholder="請輸入店家簡介" />
+        <textarea v-model="storeDescription" class="form-control border-gdg" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="info-section mb-4">
+      <div v-if="!isEditing">
+        <label class="form-label text-gdg fw-bold">連絡電話：</label>
+        <p class="p-3 border bg-light">{{ storePhone }}</p>
+      </div>
+      <div v-else>
+        <label class="form-label text-gdg fw-bold">編輯電話：</label>
+        <input type="text" v-model="storePhone" class="form-control border-gdg" />
+      </div>
+    </div>
+
+    <div class="info-section mb-4">
+      <div v-if="!isEditing">
+        <label class="form-label text-gdg fw-bold">店家地址：</label>
+        <p class="p-3 border bg-light">{{ storeAddress }}</p>
+      </div>
+      <div v-else>
+        <label class="form-label text-gdg fw-bold">編輯地址：</label>
+        <input type="text" v-model="storeAddress" class="form-control border-gdg" />
       </div>
     </div>
 
@@ -100,9 +282,12 @@ const handleSave = async () => {
       </div>
     </div>
 
-    <div class="mb-5">
-      <BaseButton v-if="!isEditing" color="gdg" @click="isEditing = true">編輯資訊</BaseButton>
-      <BaseButton v-else color="gdg" @click="handleSave">儲存編輯</BaseButton>
+    <div class="mb-5 d-flex gap-2">
+      <BaseButton v-if="!isEditing" color="gdg" @click="startEditing">編輯資訊</BaseButton>
+      <template v-else>
+        <BaseButton color="gdg" @click="handleSave">儲存編輯</BaseButton>
+        <BaseButton color="danger" @click="handleCancel">取消編輯</BaseButton>
+      </template>
     </div>
 
     <hr class="my-5">
@@ -119,5 +304,9 @@ const handleSave = async () => {
 <style scoped>
 .border-gdg {
   border-color: #9f9572 !important;
+}
+
+.image-container img {
+  border: 4px solid #9f9572;
 }
 </style>
