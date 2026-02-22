@@ -10,9 +10,9 @@
         <li class="nav-item">
           <a 
             class="nav-link" 
-            :class="{ active: currentTab === 'All' }" 
+            :class="{ active: activeTab === 'all' }" 
             href="#" 
-            @click.prevent="setTab('All')"
+            @click.prevent="activeTab = 'all'"
           >
             全部
           </a>
@@ -20,9 +20,9 @@
         <li class="nav-item">
           <a 
             class="nav-link" 
-            :class="{ active: currentTab === '未處理' }" 
+            :class="{ active: activeTab === 'pending' }" 
             href="#" 
-            @click.prevent="setTab('未處理')"
+            @click.prevent="activeTab = 'pending'"
           >
             未處理
           </a>
@@ -30,9 +30,9 @@
         <li class="nav-item">
           <a 
             class="nav-link" 
-            :class="{ active: currentTab === '退回中' }" 
+            :class="{ active: activeTab === 'returned' }" 
             href="#" 
-            @click.prevent="setTab('退回中')"
+            @click.prevent="activeTab = 'returned'"
           >
             退回中
           </a>
@@ -40,9 +40,9 @@
         <li class="nav-item">
           <a 
             class="nav-link" 
-            :class="{ active: currentTab === '已結案' }" 
+            :class="{ active: activeTab === 'approved' }" 
             href="#" 
-            @click.prevent="setTab('已結案')"
+            @click.prevent="activeTab = 'approved'"
           >
             已結案
           </a>
@@ -70,7 +70,7 @@
               <td>
                 <span class="fw-medium">{{ item.name }}</span>
               </td>
-              <td>{{ item.applytime }}</td>
+              <td>{{ formatDate(item.createdAt) }}</td>
               <td>
                 <span :class="['status-badge', getStatusClass(item.status)]">
                   {{ getStatusDisplay(item.status) }}
@@ -141,54 +141,93 @@
         </nav>
       </div>
     </div>
+
+    <!-- Review Modal -->
+    <div class="modal fade" :class="{ 'show d-block': showReviewModal }" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reviewModalLabel">審核申請 #{{ selectedRegistration?.id }}</h5>
+            <button type="button" class="btn-close" @click="closeReviewModal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-start">
+              <div class="mb-3 p-3 bg-light rounded">
+                <h6 class="fw-bold mb-2 border-bottom pb-2">申請人資料</h6>
+                <p class="mb-1"><strong>姓名:</strong> {{ selectedRegistration?.name }}</p>
+                <p class="mb-1"><strong>電話:</strong> {{ selectedRegistration?.phone }}</p>
+                <p class="mb-0"><strong>地址:</strong> {{ selectedRegistration?.address }}</p>
+                <p v-if="selectedRegistration?.storeName" class="mb-0 mt-1"><strong>商家名稱:</strong> {{ selectedRegistration?.storeName }}</p>
+              </div>
+              <div class="mb-3">
+                <label for="audit-opinion" class="form-label fw-bold">審核意見</label>
+                <textarea id="audit-opinion" class="form-control" rows="3" placeholder="請輸入審核意見 (退回時必填)" v-model="reviewOpinion"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeReviewModal">取消</button>
+            <button type="button" class="btn btn-danger" @click="reviewAction = 'reject'; submitReview()">退回申請</button>
+            <button type="button" class="btn btn-success" @click="reviewAction = 'approve'; submitReview()">同意申請</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showReviewModal" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import axios from 'axios';
+import { ref, onMounted, computed, watch } from 'vue';
 import Swal from 'sweetalert2';
+import { storeRegistrationAPI } from '@/api/storeRegistration';
 
+// 狀態對應 (Backend Enum -> Frontend Tab Value)
+const STATUS_MAP = {
+    'pending': 'PENDING',
+    'approved': 'APPROVED',
+    'returned': 'RETURNED'
+};
+
+const activeTab = ref('pending'); // pending, approved, returned
 const registrations = ref([]);
-const currentPage = ref(1);
-const pageSize = 10;
-const currentTab = ref('All');
-const totalItems = ref(0);
+const loading = ref(false);
+const currentPage = ref(0); // 0-indexed
+const pageSize = ref(10);
 const totalPages = ref(0);
+const totalItems = ref(0); // Added for pagination info
 
-// Map frontend tabs to backend status enums
-const tabToStatusMap = {
-    'All': null,
-    '未處理': 'PENDING',
-    '退回中': 'RETURNED',
-    '已結案': 'APPROVED'
-};
-
-const setTab = (tab) => {
-  currentTab.value = tab;
-  currentPage.value = 1; // Reset to first page when switching tabs
-  fetchRegistrations();
-};
+// Modal related
+const showReviewModal = ref(false);
+const selectedRegistration = ref(null);
+const reviewAction = ref('approve'); // approve, reject
+const reviewOpinion = ref('');
 
 const fetchRegistrations = async () => {
+    loading.value = true;
     try {
-        const status = tabToStatusMap[currentTab.value];
+        const status = STATUS_MAP[activeTab.value];
         const params = {
-            page: currentPage.value - 1, // API is 0-indexed
-            size: pageSize
+            page: currentPage.value, // API is 0-indexed
+            size: pageSize.value
         };
+        
         if (status) {
             params.status = status;
         }
-
-        const response = await axios.get('/api/store-registrations', { params });
-        registrations.value = response.data.content;
-        totalItems.value = response.data.totalElements;
-        totalPages.value = response.data.totalPages;
-
+        
+        const response = await storeRegistrationAPI.getAllApplications(params);
+        
+        // Ensure we handle Page<T> format
+        registrations.value = response.data?.content || response.content || [];
+        totalPages.value = response.data?.totalPages || response.totalPages || 0;
+        totalItems.value = response.data?.totalElements || response.totalElements || 0;
+        
     } catch (error) {
-        console.error('Error fetching registrations:', error);
+        console.error('Fetch error:', error);
         Swal.fire('錯誤', '無法載入申請資料', 'error');
+    } finally {
+        loading.value = false;
     }
 };
 
@@ -196,20 +235,19 @@ onMounted(() => {
     fetchRegistrations();
 });
 
-const startIndex = computed(() => (currentPage.value - 1) * pageSize);
-const endIndex = computed(() => startIndex.value + registrations.value.length); // Display count for current page
-
-// Computed: Use registrations directly as it is now paginated from server
-const paginatedData = computed(() => registrations.value);
+watch(activeTab, () => {
+    currentPage.value = 0; // Reset to first page on tab change
+    fetchRegistrations();
+});
 
 // Helper for status badge class
 const getStatusClass = (status) => {
   switch (status) {
-    case 'APPROVED': // Changed to match Backend Enum
+    case 'APPROVED':
         return 'status-active'; // Green
-    case 'RETURNED': // Changed to match Backend Enum
+    case 'RETURNED':
         return 'status-banned'; // Red
-    case 'PENDING': // Changed to match Backend Enum
+    case 'PENDING':
         return 'status-pending'; // Amber
     default:
         return 'status-user'; // Gray
@@ -226,7 +264,24 @@ const getStatusDisplay = (status) => {
     }
 };
 
-// Simple page range for pagination
+// Formatting Date
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Pagination computed properties
+const startIndex = computed(() => currentPage.value * pageSize.value);
+const endIndex = computed(() => startIndex.value + (registrations.value ? registrations.value.length : 0));
+const paginatedData = computed(() => registrations.value || []);
+
 const visiblePages = computed(() => {
   const pages = [];
   const maxVisible = 5;
@@ -278,20 +333,22 @@ const openAuditModal = async (item) => {
     denyButtonColor: '#ef4444', // Red
     width: '600px',
     preConfirm: () => {
+      const container = Swal.getHtmlContainer();
       return {
         action: 'approve',
-        opinion: document.getElementById('audit-opinion').value
+        opinion: container.querySelector('#audit-opinion').value
       };
     },
     preDeny: () => {
-      const opinion = document.getElementById('audit-opinion').value;
-      if (!opinion.trim()) {
+      const container = Swal.getHtmlContainer();
+      const opinion = container.querySelector('#audit-opinion').value;
+      if (!opinion || !opinion.trim()) {
         Swal.showValidationMessage('退回申請時必須填寫審核意見');
         return false;
       }
       return {
         action: 'reject', // Changed to match Backend API expectation
-        opinion: opinion
+        opinion: opinion.trim()
       };
     }
   });
@@ -325,7 +382,7 @@ const handleApprove = async (item, opinion) => {
 
   if (confirmResult.isConfirmed) {
     try {
-      await axios.put(`/api/store-registrations/${item.id}/review`, {
+      await storeRegistrationAPI.reviewApplication(item.id, {
           action: 'approve',
           opinion: opinion
       });
@@ -361,7 +418,7 @@ const handleReturn = async (item, opinion) => {
 
   if (confirmResult.isConfirmed) {
     try {
-      await axios.put(`/api/store-registrations/${item.id}/review`, {
+      await storeRegistrationAPI.reviewApplication(item.id, {
           action: 'reject',
           opinion: opinion
       });

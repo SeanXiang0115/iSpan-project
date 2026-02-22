@@ -36,16 +36,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { storeRegistrationAPI } from '@/api/storeRegistration';
 
 const router = useRouter()
 const myRegistrations = ref([])
 
 const fetchMyRegistrations = async () => {
     try {
-        const response = await axios.get('/api/store-registrations/my');
-        myRegistrations.value = response.data;
+        const data = await storeRegistrationAPI.getMyApplications();
+        myRegistrations.value = data;
     } catch (error) {
         console.error('Failed to fetch registrations', error);
     }

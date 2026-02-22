@@ -1,101 +1,92 @@
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import { ref, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import Swal from 'sweetalert2';
+import { storeRegistrationAPI } from '@/api/storeRegistration';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
-import Swal from 'sweetalert2';
 
-const route = useRoute();
 const router = useRouter();
-
-const form = reactive({
-  ownerName: '',
-  storePhone: '',
-  storeAddress: '',
-  storeName: ''
-});
-
+const route = useRoute();
 const isSubmitting = ref(false);
 const isEditMode = ref(false);
 const registrationId = ref(null);
 
+const form = ref({
+  ownerName: '',
+  storeName: '',
+  storePhone: '',
+  storeAddress: ''
+});
+
 onMounted(async () => {
-    // Check if there is an id in query for edit mode
+    // Check if in edit mode (resubmitting a returned application)
     if (route.query.id) {
         isEditMode.value = true;
         registrationId.value = route.query.id;
-        await fetchRegistrationData(route.query.id);
+        try {
+            // Fetch existing data to populate form
+            const response = await storeRegistrationAPI.getMyApplications();
+            // Find the specific registration
+            const target = response.find(r => r.id == registrationId.value);
+            if (target) {
+                form.value = {
+                    ownerName: target.name,
+                    storeName: target.storeName,
+                    storePhone: target.phone,
+                    storeAddress: target.address
+                };
+            } else {
+                Swal.fire('錯誤', '找不到該申請資料', 'error');
+                router.push('/userInfo'); // Redirect back
+            }
+        } catch (e) {
+            console.error("Failed to fetch existing application", e);
+            Swal.fire('錯誤', '載入資料失敗', 'error');
+            router.push('/userInfo'); // Redirect back on error
+        }
     }
 });
-
-const fetchRegistrationData = async (id) => {
-    try {
-        // Assume we have an API to get specific registration or use the 'my' endpoint and find it
-        // Simpler: use the get-my-applications and find by ID, or if backend supports get-by-id for owner
-        // For now, let's try fetching from /api/store-registrations/my and filtering
-        const response = await axios.get('/api/store-registrations/my');
-        const registration = response.data.find(r => r.id == id);
-        
-        if (registration) {
-            form.ownerName = registration.name;
-            form.storePhone = registration.phone;
-            form.storeAddress = registration.address;
-            form.storeName = registration.storeName || '';
-        } else {
-            Swal.fire('錯誤', '找不到該申請資料', 'error');
-            router.push('/user-info'); // Redirect back
-        }
-    } catch (error) {
-        console.error('Failed to fetch data', error);
-        Swal.fire('錯誤', '載入資料失敗', 'error');
-    }
-};
 
 const handleSubmit = async () => {
   if (isSubmitting.value) return;
 
   isSubmitting.value = true;
-  
-  const submissionData = { ...form };
 
   try {
     let response;
     if (isEditMode.value) {
-        response = await axios.put(`/api/store-registrations/${registrationId.value}`, submissionData);
-        Swal.fire({
-            title: '重送成功',
-            text: '您的申請已更新並重新送出審核',
-            icon: 'success',
-            confirmButtonText: '確定',
-            confirmButtonColor: '#9f9572'
-        }).then(() => {
-            router.push('/user-info');
-        });
+        response = await storeRegistrationAPI.updateApplication(registrationId.value, form.value);
     } else {
-        response = await axios.post('/api/store-registrations', submissionData);
-        Swal.fire({
-            title: '申請已送出',
-            text: '我們已收到您的商家註冊申請，將盡快進行審核',
-            icon: 'success',
-            confirmButtonText: '確定',
-            confirmButtonColor: '#9f9572'
-        }).then(() => {
-            router.push('/user-info');
-        });
+        response = await storeRegistrationAPI.submitApplication(form.value);
     }
+
+    console.log('Registration success:', response);
+    
+    await Swal.fire({
+        title: '提交成功',
+        text: '您的商家註冊申請已提交，將由管理員進行審核。',
+        icon: 'success',
+        confirmButtonText: '確定',
+        confirmButtonColor: '#9f9572'
+    });
+    
+    router.push('/userInfo');
     
   } catch (error) {
     console.error('Registration failed:', error);
-    const msg = error.response?.data?.error || '註冊失敗，請稍後再試。';
+    const msg = error.response?.data?.error || error.message || '註冊失敗，請稍後再試。';
     
+    // Debug info
+    const debugInfo = error.response ? `Status: ${error.response.status}` : 'No response from server';
+
     // Check specific error messages from backend
     if (msg.includes("already has a pending")) {
         Swal.fire('重複申請', '您已有審核中或待處理的申請，請勿重複提交。', 'warning');
     } else if (msg.includes("already a store")) {
          Swal.fire('已是商家', '您已經是商家身分，無需再次申請。', 'info');
     } else {
-        Swal.fire('錯誤', msg, 'error');
+        Swal.fire('錯誤', `${msg}\n(${debugInfo})`, 'error');
     }
   } finally {
     isSubmitting.value = false;

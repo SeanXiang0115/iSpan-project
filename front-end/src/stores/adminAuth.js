@@ -1,9 +1,19 @@
 import { defineStore } from 'pinia';
 
+const safeJSONParse = (val) => {
+    try {
+        if (!val || val === 'undefined') return null;
+        return JSON.parse(val);
+    } catch (e) {
+        console.warn('Failed to parse localStorage item', e);
+        return null;
+    }
+};
+
 export const useAdminAuthStore = defineStore('adminAuth', {
     state: () => ({
         // initialize state from local storage to enable user to stay logged in
-        admin: JSON.parse(localStorage.getItem('adminUser')) || null,
+        admin: safeJSONParse(localStorage.getItem('adminUser')),
         accessToken: localStorage.getItem('adminAccessToken') || null,
         refreshToken: localStorage.getItem('adminRefreshToken') || null,
     }),
