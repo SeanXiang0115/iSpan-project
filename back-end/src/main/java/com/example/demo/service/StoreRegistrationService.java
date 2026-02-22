@@ -89,6 +89,37 @@ public class StoreRegistrationService {
         return registrationRepository.save(registration);
     }
 
+    // 2.1 更新待審核申請 (針對 PENDING 狀態)
+    @Transactional
+    public StoreRegistration updatePendingApplication(Long userId, Integer registrationId,
+            StoreRegistrationRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        StoreRegistration registration = registrationRepository.findById(registrationId)
+                .orElseThrow(() -> new RuntimeException("Registration not found"));
+
+        if (!registration.getApplicant().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized access to this registration");
+        }
+
+        if (registration.getStatus() != StoreRegistrationStatus.PENDING) {
+            throw new RuntimeException("Only PENDING applications can be modified here");
+        }
+
+        // 更新資料
+        if (request.getOwnerName() != null)
+            registration.setName(request.getOwnerName());
+        if (request.getStorePhone() != null)
+            registration.setPhone(request.getStorePhone());
+        if (request.getStoreAddress() != null)
+            registration.setAddress(request.getStoreAddress());
+        if (request.getStoreName() != null)
+            registration.setStoreName(request.getStoreName());
+
+        return registrationRepository.save(registration);
+    }
+
     // 3. 查詢所有申請 (依狀態篩選，可分頁)
     public Page<StoreRegistration> findAll(StoreRegistrationStatus status, Boolean isUpdate, Pageable pageable) {
         if (status != null && isUpdate != null) {
@@ -110,7 +141,7 @@ public class StoreRegistrationService {
 
     // 4. 同意申請
     @Transactional
-    public void approveApplication(Integer adminId, Integer registrationId, String opinion) {
+    public void approveApplication(Integer adminId, Integer registrationId, String opinion, String lastUpdatedAt) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
@@ -119,6 +150,20 @@ public class StoreRegistrationService {
 
         if (registration.getStatus() != StoreRegistrationStatus.PENDING) {
             throw new RuntimeException("Registration is not in PENDING status");
+        }
+
+        // Dirty Write Check
+        if (lastUpdatedAt != null && !lastUpdatedAt.isEmpty()) {
+            String currentUpdatedStr = registration.getUpdatedAt() != null ? registration.getUpdatedAt().toString()
+                    : "";
+            // Spring Boot 傳回前端的 LocalDateTime 可能帶有 Z 或毫秒差異，這裡做安全的字串比對，只比對到秒之後的前綴
+            // 或是最簡單的直接 equals (前端保證原封不動傳回)
+            if (!currentUpdatedStr.equals(lastUpdatedAt)) {
+                // 如果直接 equals 失敗，嘗試移除格式差異 (例如 'Z' 或是毫秒後綴的長度差異)
+                if (!currentUpdatedStr.startsWith(lastUpdatedAt.split("\\.")[0])) {
+                    throw new RuntimeException("此申請資料已由申請人修改過，請重新整理頁面後再審核。");
+                }
+            }
         }
 
         // update registration
@@ -152,7 +197,7 @@ public class StoreRegistrationService {
 
     // 5. 退回申請
     @Transactional
-    public void rejectApplication(Integer adminId, Integer registrationId, String opinion) {
+    public void rejectApplication(Integer adminId, Integer registrationId, String opinion, String lastUpdatedAt) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
@@ -161,6 +206,17 @@ public class StoreRegistrationService {
 
         if (registration.getStatus() != StoreRegistrationStatus.PENDING) {
             throw new RuntimeException("Registration is not in PENDING status");
+        }
+
+        // Dirty Write Check
+        if (lastUpdatedAt != null && !lastUpdatedAt.isEmpty()) {
+            String currentUpdatedStr = registration.getUpdatedAt() != null ? registration.getUpdatedAt().toString()
+                    : "";
+            if (!currentUpdatedStr.equals(lastUpdatedAt)) {
+                if (!currentUpdatedStr.startsWith(lastUpdatedAt.split("\\.")[0])) {
+                    throw new RuntimeException("此申請資料已由申請人修改過，請重新整理頁面後再審核。");
+                }
+            }
         }
 
         registration.setStatus(StoreRegistrationStatus.RETURNED);

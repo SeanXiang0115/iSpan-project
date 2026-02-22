@@ -70,6 +70,20 @@ public class StoreRegistrationController {
         }
     }
 
+    // 2.1 使用者修改申請 (針對 PENDING 狀態)
+    @PutMapping("/{id}/pending-update")
+    public ResponseEntity<?> updatePendingApplication(@PathVariable Integer id,
+            @RequestBody StoreRegistrationRequest request) {
+        try {
+            User currentUser = userService.getCurrentUserEntity();
+            StoreRegistration registration = registrationService.updatePendingApplication(currentUser.getId(), id,
+                    request);
+            return ResponseEntity.ok(registration);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // 3. 管理員查詢列表
     @GetMapping
     public ResponseEntity<Page<StoreRegistration>> getAllApplications(
@@ -110,11 +124,12 @@ public class StoreRegistrationController {
 
             String action = payload.get("action");
             String opinion = payload.get("opinion");
+            String lastUpdatedAt = payload.get("lastUpdatedAt"); // Dirty Write Prevention
 
             if ("approve".equalsIgnoreCase(action)) {
-                registrationService.approveApplication(adminId, id, opinion);
+                registrationService.approveApplication(adminId, id, opinion, lastUpdatedAt);
             } else if ("reject".equalsIgnoreCase(action) || "return".equalsIgnoreCase(action)) {
-                registrationService.rejectApplication(adminId, id, opinion);
+                registrationService.rejectApplication(adminId, id, opinion, lastUpdatedAt);
             } else {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid action"));
             }

@@ -10,12 +10,21 @@ export const storeRegistrationAPI = {
     },
 
     /**
-     * 更新並重新提交申請
+     * 更新並重新提交申請 (針對 RETURNED)
      * @param {Number} id 
      * @param {Object} data 
      */
     updateApplication(id, data) {
         return api.put(`/store-registrations/${id}`, data);
+    },
+
+    /**
+     * 更新待審核的申請 (針對 PENDING)
+     * @param {Number} id 
+     * @param {Object} data 
+     */
+    updatePendingApplication(id, data) {
+        return api.put(`/store-registrations/${id}/pending-update`, data);
     },
 
     /**

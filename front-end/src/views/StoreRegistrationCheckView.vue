@@ -359,7 +359,8 @@ const openAuditModal = async (item) => {
       const container = Swal.getHtmlContainer();
       return {
         action: 'approve',
-        opinion: container.querySelector('#audit-opinion').value
+        opinion: container.querySelector('#audit-opinion').value,
+        lastUpdatedAt: item.updatedAt
       };
     },
     preDeny: () => {
@@ -371,21 +372,22 @@ const openAuditModal = async (item) => {
       }
       return {
         action: 'reject', // Changed to match Backend API expectation
-        opinion: opinion.trim()
+        opinion: opinion.trim(),
+        lastUpdatedAt: item.updatedAt
       };
     }
   });
 
   if (result) {
     if (result.action === 'approve') {
-       handleApprove(item, result.opinion);
+       handleApprove(item, result.opinion, result.lastUpdatedAt);
     } else if (result.action === 'reject') {
-       handleReturn(item, result.opinion);
+       handleReturn(item, result.opinion, result.lastUpdatedAt);
     }
   }
 };
 
-const handleApprove = async (item, opinion) => {
+const handleApprove = async (item, opinion, lastUpdatedAt) => {
   const confirmResult = await Swal.fire({
     title: '確認要同意這筆申請?',
     html: `
@@ -407,7 +409,8 @@ const handleApprove = async (item, opinion) => {
     try {
       await storeRegistrationAPI.reviewApplication(item.id, {
           action: 'approve',
-          opinion: opinion
+          opinion: opinion,
+          lastUpdatedAt: lastUpdatedAt
       });
       
       Swal.fire('已結案', '申請已成功同意', 'success');
@@ -420,7 +423,7 @@ const handleApprove = async (item, opinion) => {
   }
 };
 
-const handleReturn = async (item, opinion) => {
+const handleReturn = async (item, opinion, lastUpdatedAt) => {
   const confirmResult = await Swal.fire({
     title: '確認要退回這筆申請?',
     html: `
@@ -443,7 +446,8 @@ const handleReturn = async (item, opinion) => {
     try {
       await storeRegistrationAPI.reviewApplication(item.id, {
           action: 'reject',
-          opinion: opinion
+          opinion: opinion,
+          lastUpdatedAt: lastUpdatedAt
       });
 
       Swal.fire('已退回', '申請已退回給使用者', 'success');
