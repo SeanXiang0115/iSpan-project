@@ -19,24 +19,36 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final LoginAttemptService loginAttemptService;
 
     @Value("${jwt.access-token-expiration-ms}")
     private long accessTokenExpirationMs;
 
     public AdminLoginResponse login(AdminLoginRequest request) {
-        // 1. 根據 account 查詢 Admin
-        Admin admin = adminRepository.findByAccount(request.getAccount())
-                .orElseThrow(() -> new RuntimeException("Invalid account or password"));
+        String account = request.getAccount();
 
-        // 2. 檢查帳號是否被鎖定
+        // 0. 檢查是否已被防爆破機制鎖定
+        if (loginAttemptService.isBlocked(account)) {
+            throw new RuntimeException("登入失敗3次，請15分鐘後再試，或點選忘記密碼重設");
+        }
+
+        // 1. 根據 account 查詢 Admin
+        Admin admin = adminRepository.findByAccount(account)
+                .orElseThrow(() -> new RuntimeException("登入失敗，請重新嘗試"));
+
+        // 2. 檢查帳號是否被停用
         if (!Boolean.TRUE.equals(admin.getEnabled())) {
             throw new RuntimeException("Account is disabled");
         }
 
         // 3. 驗證密碼
         if (!passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
-            throw new RuntimeException("Invalid account or password");
+            loginAttemptService.loginFailed(account);
+            throw new RuntimeException("登入失敗，請重新嘗試");
         }
+
+        // 登入成功，重置失敗計數
+        loginAttemptService.loginSucceeded(account);
 
         // 4. 生成 JWT tokens (包含 role="ADMIN" 和 position)
         String accessToken = tokenProvider.generateAccessToken(

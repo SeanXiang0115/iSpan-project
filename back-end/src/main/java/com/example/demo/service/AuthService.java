@@ -26,6 +26,7 @@ public class AuthService {
         private final PasswordEncoder passwordEncoder;
         private final JwtTokenProvider tokenProvider;
         private final AuthenticationManager authenticationManager;
+        private final LoginAttemptService loginAttemptService;
 
         @Value("${jwt.access-token-expiration-ms}")
         private long accessTokenExpirationMs;
@@ -69,11 +70,23 @@ public class AuthService {
                 // 使用 identifier（可以是 email 或 username）進行登入
                 String identifier = request.getIdentifier();
 
+                // 檢查是否已被防爆破機制鎖定
+                if (loginAttemptService.isBlocked(identifier)) {
+                        throw new RuntimeException("登入失敗3次，請15分鐘後再試，或點選忘記密碼重設");
+                }
+
                 // 第一步：驗證用戶名和密碼
-                Authentication authentication = authenticationManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(
-                                                identifier,
-                                                request.getPassword()));
+                Authentication authentication;
+                try {
+                        authentication = authenticationManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(
+                                                        identifier,
+                                                        request.getPassword()));
+                } catch (org.springframework.security.core.AuthenticationException e) {
+                        // 密碼錯誤，紀錄失敗次數
+                        loginAttemptService.loginFailed(identifier);
+                        throw new RuntimeException("登入失敗，請重新嘗試");
+                }
 
                 User user = userRepository.findByEmail(identifier)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -95,6 +108,9 @@ public class AuthService {
                 // login 使用 authentication，JwtTokenProvider 改寫後會自動從 authorities 抓取 role
                 String accessToken = tokenProvider.generateAccessToken(authentication);
                 String refreshToken = tokenProvider.generateRefreshToken(user.getEmail());
+
+                // 登入成功，重置失敗計數
+                loginAttemptService.loginSucceeded(identifier);
 
                 // 在 console 顯示登入者的 JWT（測試用）
                 System.out.println("========== LOGIN SUCCESS ==========");

@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import { authAPI } from '@/api/auth';
@@ -21,6 +22,30 @@ const goToRegister = () => {
 const handleLogin = async () => {
   if (isSubmitting.value) return;
   
+  // // 1. 檢查信箱格式
+  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // if (!emailRegex.test(email.value)) {
+  //   Swal.fire({
+  //     icon: 'error',
+  //     title: '格式錯誤',
+  //     text: '帳號格式有誤',
+  //     confirmButtonColor: '#9f9572'
+  //   });
+  //   return;
+  // }
+
+  // // 2. 檢查密碼格式 (至少8碼，包含大小寫、數字、特殊符號)
+  // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  // if (!passwordRegex.test(password.value)) {
+  //   Swal.fire({
+  //     icon: 'error',
+  //     title: '格式錯誤',
+  //     text: '密碼格式有誤',
+  //     confirmButtonColor: '#9f9572'
+  //   });
+  //   return;
+  // }
+
   isSubmitting.value = true;
   const loginData = {
     identifier: email.value,
@@ -54,14 +79,26 @@ const handleLogin = async () => {
     // 使用 Auth Store 儲存登入資訊
     authStore.login(response.data.user, accessToken, response.data.refreshToken);
     
-    alert(`登入成功！\n你好, ${authStore.userName}\n角色: ${role}`);
+    await Swal.fire({
+      icon: 'success',
+      title: '登入成功！',
+      html: `你好, <b>${authStore.userName}</b><br>角色: ${role}`,
+      timer: 1500,
+      showConfirmButton: false
+    });
     
     // 導向首頁或 dashboard+
     router.push('/');
     
   } catch (error) {
     console.error('Login failed:', error);
-    alert(`登入請求失敗 (預計傳送到後端的 JSON):\n${JSON.stringify(loginData, null, 2)}`);
+    const errorMsg = error.response?.data?.message || '登入失敗，請重新嘗試';
+    Swal.fire({
+      icon: 'error',
+      title: '登入失敗',
+      text: errorMsg,
+      confirmButtonColor: '#9f9572'
+    });
   } finally {
     isSubmitting.value = false;
   }

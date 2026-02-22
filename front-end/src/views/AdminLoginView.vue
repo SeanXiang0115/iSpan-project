@@ -1,6 +1,6 @@
-<script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import { adminAPI } from '@/api/admin';
@@ -42,7 +42,13 @@ const handleLogin = async () => {
     // 使用 Pinia store 進行登入狀態管理
     adminAuthStore.login(adminData, accessToken, refreshToken);
     
-    alert(`登入成功！\n帳號: ${adminData.account}\n姓名: ${adminData.name}\n職位: ${adminData.position}`);
+    await Swal.fire({
+      icon: 'success',
+      title: '登入成功！',
+      html: `帳號: <b>${adminData.account}</b><br>姓名: ${adminData.name}<br>職位: ${adminData.position}`,
+      timer: 1500,
+      showConfirmButton: false
+    });
     
     // 登入成功後跳轉至後台首頁
     router.push('/admin');
@@ -50,7 +56,12 @@ const handleLogin = async () => {
   } catch (error) {
     console.error('Admin login failed:', error);
     const errorMsg = error.response?.data?.message || '登入失敗，請檢查帳號密碼';
-    alert(errorMsg);
+    Swal.fire({
+      icon: 'error',
+      title: '登入失敗',
+      text: errorMsg,
+      confirmButtonColor: '#1e3c72'
+    });
   } finally {
     isSubmitting.value = false;
   }
