@@ -12,6 +12,10 @@ const email = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
 
+const handleGoogleLogin = () => {
+  window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+};
+
 const handleRegister = async () => {
   if (isSubmitting.value) return;
 
@@ -89,7 +93,7 @@ const goToLogin = () => {
       </template>
 
       <div class="d-grid gap-3 pt-2">
-        <BaseButton color="light" size="md" class="social-btn border w-100 py-2 d-flex align-items-center justify-content-center">
+        <BaseButton color="light" size="md" type="button" @click="handleGoogleLogin" class="social-btn border w-100 py-2 d-flex align-items-center justify-content-center">
           <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" width="20" class="me-2">
           <span class="small fw-medium text-dark" style="font-size: 14px;">透過 Google 註冊</span>
         </BaseButton>

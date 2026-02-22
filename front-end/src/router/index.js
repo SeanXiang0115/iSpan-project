@@ -133,6 +133,12 @@ const routes = [
     name: 'FeedbackAP'
   },
   {
+    path: '/oauth2/redirect',
+    name: 'OAuth2Redirect',
+    component: () => import('@/views/OAuth2RedirectHandler.vue'),
+    meta: { layout: 'blank' }
+  },
+  {
     path: '/register',
     component: () => import('@/views/RegisterView.vue'),
     name: 'Register',

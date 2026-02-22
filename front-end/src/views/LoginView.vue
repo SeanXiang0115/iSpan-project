@@ -19,33 +19,12 @@ const goToRegister = () => {
   router.push('/register');
 };
 
+const handleGoogleLogin = () => {
+  window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+};
+
 const handleLogin = async () => {
   if (isSubmitting.value) return;
-  
-  // // 1. 檢查信箱格式
-  // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // if (!emailRegex.test(email.value)) {
-  //   Swal.fire({
-  //     icon: 'error',
-  //     title: '格式錯誤',
-  //     text: '帳號格式有誤',
-  //     confirmButtonColor: '#9f9572'
-  //   });
-  //   return;
-  // }
-
-  // // 2. 檢查密碼格式 (至少8碼，包含大小寫、數字、特殊符號)
-  // const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  // if (!passwordRegex.test(password.value)) {
-  //   Swal.fire({
-  //     icon: 'error',
-  //     title: '格式錯誤',
-  //     text: '密碼格式有誤',
-  //     confirmButtonColor: '#9f9572'
-  //   });
-  //   return;
-  // }
-
   isSubmitting.value = true;
   const loginData = {
     identifier: email.value,
@@ -139,7 +118,7 @@ const handleLogin = async () => {
             <span class="divider-text">或</span>
           </div>
 
-          <BaseButton color="light" size="lg" class="social-btn border w-100 py-2 d-flex align-items-center justify-content-center">
+          <BaseButton color="light" size="lg" type="button" @click="handleGoogleLogin" class="social-btn border w-100 py-2 d-flex align-items-center justify-content-center">
             <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" width="20" class="me-2">
             <span class="small fw-medium text-dark" style="font-size: 12px;">使用 Google 帳號登入</span>
           </BaseButton>
