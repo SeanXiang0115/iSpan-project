@@ -15,6 +15,13 @@ import java.util.Optional;
 @Repository
 public interface StoreRegistrationRepository extends JpaRepository<StoreRegistration, Integer> {
 
+    // 依狀態與申請類別查詢
+    Page<StoreRegistration> findByStatusAndIsUpdate(StoreRegistrationStatus status, Boolean isUpdate,
+            Pageable pageable);
+
+    // 依申請類別查詢
+    Page<StoreRegistration> findByIsUpdate(Boolean isUpdate, Pageable pageable);
+
     // 依狀態查詢 (支援分頁)
     Page<StoreRegistration> findByStatus(StoreRegistrationStatus status, Pageable pageable);
 

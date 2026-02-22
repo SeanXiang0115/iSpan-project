@@ -53,6 +53,10 @@ public class StoreRegistration {
     @Builder.Default
     private StoreRegistrationStatus status = StoreRegistrationStatus.PENDING;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isUpdate = false;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

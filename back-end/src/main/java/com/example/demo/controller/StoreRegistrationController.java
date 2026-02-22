@@ -74,13 +74,14 @@ public class StoreRegistrationController {
     @GetMapping
     public ResponseEntity<Page<StoreRegistration>> getAllApplications(
             @RequestParam(required = false) StoreRegistrationStatus status,
+            @RequestParam(required = false) Boolean isUpdate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         // TODO: Add Validations that current user is Admin
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        Page<StoreRegistration> result = registrationService.findAll(status, pageRequest);
+        Page<StoreRegistration> result = registrationService.findAll(status, isUpdate, pageRequest);
         return ResponseEntity.ok(result);
     }
 

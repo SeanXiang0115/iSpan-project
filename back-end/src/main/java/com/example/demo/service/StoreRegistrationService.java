@@ -49,6 +49,7 @@ public class StoreRegistrationService {
                 .address(request.getStoreAddress())
                 .storeName(request.getStoreName()) // Optional
                 .status(StoreRegistrationStatus.PENDING)
+                .isUpdate(user.getIsStore()) // 標記是否為資料修改申請
                 .build();
 
         return registrationRepository.save(registration);
@@ -89,9 +90,13 @@ public class StoreRegistrationService {
     }
 
     // 3. 查詢所有申請 (依狀態篩選，可分頁)
-    public Page<StoreRegistration> findAll(StoreRegistrationStatus status, Pageable pageable) {
-        if (status != null) {
+    public Page<StoreRegistration> findAll(StoreRegistrationStatus status, Boolean isUpdate, Pageable pageable) {
+        if (status != null && isUpdate != null) {
+            return registrationRepository.findByStatusAndIsUpdate(status, isUpdate, pageable);
+        } else if (status != null) {
             return registrationRepository.findByStatus(status, pageable);
+        } else if (isUpdate != null) {
+            return registrationRepository.findByIsUpdate(isUpdate, pageable);
         }
         return registrationRepository.findAll(pageable);
     }

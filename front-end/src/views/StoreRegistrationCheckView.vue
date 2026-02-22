@@ -38,7 +38,7 @@
           </a>
         </li>
         <li class="nav-item">
-          <a 
+          <a   
             class="nav-link" 
             :class="{ active: activeTab === 'approved' }" 
             href="#" 
@@ -48,6 +48,14 @@
           </a>
         </li>
       </ul>
+      <div class="ms-3 d-flex align-items-center">
+        <label class="me-2 fw-medium text-muted mb-0">申請類別:</label>
+        <select v-model="filterType" class="form-select form-select-sm w-auto border-0 bg-light shadow-sm">
+          <option value="">全部</option>
+          <option value="false">初次註冊</option>
+          <option value="true">資料修改</option>
+        </select>
+      </div>
     </div>
 
     <div class="admin-card overflow-hidden border-top-0 rounded-top-0">
@@ -59,6 +67,7 @@
               <th>申請人帳號</th>
               <th>申請人姓名</th>
               <th>申請時間</th>
+              <th>申請類別</th>
               <th>案件狀態</th>
               <th>審核</th>
             </tr>
@@ -71,6 +80,11 @@
                 <span class="fw-medium">{{ item.name }}</span>
               </td>
               <td>{{ formatDate(item.createdAt) }}</td>
+              <td>
+                <span class="badge" :class="item.isUpdate ? 'bg-primary' : 'bg-success'">
+                  {{ item.isUpdate ? '資料修改' : '初次註冊' }}
+                </span>
+              </td>
               <td>
                 <span :class="['status-badge', getStatusClass(item.status)]">
                   {{ getStatusDisplay(item.status) }}
@@ -88,7 +102,7 @@
               </td>
             </tr>
             <tr v-if="paginatedData.length === 0">
-              <td colspan="6" class="text-center py-5 text-muted">
+              <td colspan="7" class="text-center py-5 text-muted">
                 沒有找到符合狀態的申請資料
               </td>
             </tr>
@@ -190,6 +204,7 @@ const STATUS_MAP = {
 };
 
 const activeTab = ref('pending'); // pending, approved, returned
+const filterType = ref(''); // '', 'true', 'false'
 const registrations = ref([]);
 const loading = ref(false);
 const currentPage = ref(0); // 0-indexed
@@ -215,6 +230,9 @@ const fetchRegistrations = async () => {
         if (status) {
             params.status = status;
         }
+        if (filterType.value !== '') {
+            params.isUpdate = filterType.value === 'true';
+        }
         
         const response = await storeRegistrationAPI.getAllApplications(params);
         
@@ -237,6 +255,11 @@ onMounted(() => {
 
 watch(activeTab, () => {
     currentPage.value = 0; // Reset to first page on tab change
+    fetchRegistrations();
+});
+
+watch(filterType, () => {
+    currentPage.value = 0; // Reset to first page on filter change
     fetchRegistrations();
 });
 

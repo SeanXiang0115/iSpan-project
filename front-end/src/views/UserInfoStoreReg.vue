@@ -10,7 +10,10 @@
     <div v-else class="list-group">
         <div v-for="item in myRegistrations" :key="item.id" class="list-group-item list-group-item-action p-3 mb-2 border rounded shadow-sm">
             <div class="d-flex w-100 justify-content-between align-items-center mb-2">
-                <h5 class="mb-1 fw-bold">店家註冊申請</h5>
+                <h5 class="mb-1 fw-bold">
+                    <span v-if="item.isUpdate" class="text-primary"><i class="bi bi-pencil-square me-2"></i>商店資料修改申請</span>
+                    <span v-else class="text-success"><i class="bi bi-shop me-2"></i>店家註冊申請</span>
+                </h5>
                 <span :class="getStatusBadgeClass(item.status)">{{ getStatusText(item.status) }}</span>
             </div>
             <p class="mb-1 text-muted small">申請時間: {{ formatTime(item.createdAt) }}</p>
