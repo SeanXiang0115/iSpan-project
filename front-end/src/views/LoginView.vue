@@ -23,17 +23,10 @@ const handleGoogleLogin = () => {
   window.location.href = 'http://localhost:8080/oauth2/authorization/google';
 };
 
-const handleLogin = async () => {
-  if (isSubmitting.value) return;
-  isSubmitting.value = true;
-  const loginData = {
-    identifier: email.value,
-    password: password.value
-  };
-
+const doLogin = async (dataToSubmit) => {
   try {
-    console.log('Login attempt with:', loginData);
-    const response = await authAPI.login(loginData);
+    console.log('Login attempt with:', dataToSubmit);
+    const response = await authAPI.login(dataToSubmit);
     console.log('Login success:', response);
     
     // ========== 解析 JWT Token ==========
@@ -72,15 +65,54 @@ const handleLogin = async () => {
   } catch (error) {
     console.error('Login failed:', error);
     const errorMsg = error.response?.data?.message || '登入失敗，請重新嘗試';
+    
+    if (errorMsg.includes('2FA code is required') || errorMsg.includes('Invalid 2FA code')) {
+      // 觸發 2FA 輸入框
+      const { value: code } = await Swal.fire({
+        title: '雙因素驗證 (2FA)',
+        input: 'text',
+        inputLabel: '請輸入 Authenticator App 上的 6 位數驗證碼',
+        inputPlaceholder: '例如：123456',
+        inputValue: '',
+        showCancelButton: true,
+        confirmButtonText: '驗證',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#9f9572',
+        inputValidator: (value) => {
+          if (!value || value.length !== 6 || !/^\d+$/.test(value)) {
+            return '請輸入有效的 6 位數字驗證碼';
+          }
+        }
+      });
+
+      if (code) {
+        // 使用含 2FA 的資料重新登入
+        dataToSubmit.twoFactorCode = code.trim();
+        return doLogin(dataToSubmit);
+      } else {
+        // 使用者取消輸入，重登出狀態
+        isSubmitting.value = false;
+        return;
+      }
+    }
+
     Swal.fire({
       icon: 'error',
       title: '登入失敗',
       text: errorMsg,
       confirmButtonColor: '#9f9572'
     });
-  } finally {
     isSubmitting.value = false;
   }
+};
+
+const handleLogin = async () => {
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
+  await doLogin({
+    identifier: email.value,
+    password: password.value
+  });
 };
 </script>
 

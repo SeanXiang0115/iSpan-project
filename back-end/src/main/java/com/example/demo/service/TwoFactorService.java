@@ -10,7 +10,6 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
 import com.warrenstrange.googleauth.GoogleAuthenticatorQRGenerator;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -24,11 +23,18 @@ import java.util.Base64;
  * 使用 Google Authenticator TOTP 演算法
  */
 @Service
-@RequiredArgsConstructor
 public class TwoFactorService {
 
     private final UserRepository userRepository;
-    private final GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();
+    private final GoogleAuthenticator googleAuthenticator;
+
+    public TwoFactorService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+        com.warrenstrange.googleauth.GoogleAuthenticatorConfig config = new com.warrenstrange.googleauth.GoogleAuthenticatorConfig.GoogleAuthenticatorConfigBuilder()
+                .setWindowSize(10) // 容錯 10 個區間 = 5 分鐘，以避免伺服器時間與手機時間稍微不同步導致驗證失敗
+                .build();
+        this.googleAuthenticator = new GoogleAuthenticator(config);
+    }
 
     // 從 application.properties 讀取應用名稱 (顯示在 Google Authenticator)
     @Value("${app.2fa.issuer:iSpan Project}")

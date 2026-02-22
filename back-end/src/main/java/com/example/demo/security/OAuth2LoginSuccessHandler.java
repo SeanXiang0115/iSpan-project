@@ -41,18 +41,27 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         CustomOAuth2User oauth2User = (CustomOAuth2User) authentication.getPrincipal();
         User user = oauth2User.getUser();
 
-        // 生成 JWT tokens
-        String accessToken = tokenProvider.generateAccessToken(user.getEmail(),
-                Boolean.TRUE.equals(user.getIsStore()) ? "STORE" : "USER");
-        String refreshToken = tokenProvider.generateRefreshToken(user.getEmail());
+        String targetUrl;
 
-        // 重定向到前端，將 tokens 作為 URL 參數傳遞
-        // 注意：實際production環境建議使用更安全的方式傳遞token
-        String targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
-                .queryParam("tokenType", "Bearer")
-                .build().toUriString();
+        if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+            // 需要進行 2FA 驗證，發行短暫的 preAuthToken
+            String preAuthToken = tokenProvider.generatePreAuthToken(user.getEmail());
+            targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                    .queryParam("require2fa", "true")
+                    .queryParam("preAuthToken", preAuthToken)
+                    .build().toUriString();
+        } else {
+            // 不需要 2FA，直接發行正式 Token
+            String accessToken = tokenProvider.generateAccessToken(user.getEmail(),
+                    Boolean.TRUE.equals(user.getIsStore()) ? "STORE" : "USER");
+            String refreshToken = tokenProvider.generateRefreshToken(user.getEmail());
+
+            targetUrl = UriComponentsBuilder.fromUriString(frontendRedirectUri)
+                    .queryParam("accessToken", accessToken)
+                    .queryParam("refreshToken", refreshToken)
+                    .queryParam("tokenType", "Bearer")
+                    .build().toUriString();
+        }
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }

@@ -112,13 +112,6 @@ public class AuthService {
                 // 登入成功，重置失敗計數
                 loginAttemptService.loginSucceeded(identifier);
 
-                // 在 console 顯示登入者的 JWT（測試用）
-                System.out.println("========== LOGIN SUCCESS ==========");
-                System.out.println("User: " + user.getEmail());
-                System.out.println("Access Token: " + accessToken);
-                System.out.println("Refresh Token: " + refreshToken);
-                System.out.println("===================================");
-
                 return AuthResponse.builder()
                                 .accessToken(accessToken)
                                 .refreshToken(refreshToken)
@@ -128,17 +121,51 @@ public class AuthService {
                                 .build();
         }
 
-        /**
-         * 驗證 2FA 驗證碼
-         */
         private boolean verify2FACode(String secret, String code) {
                 try {
-                        com.warrenstrange.googleauth.GoogleAuthenticator gAuth = new com.warrenstrange.googleauth.GoogleAuthenticator();
+                        com.warrenstrange.googleauth.GoogleAuthenticatorConfig config = new com.warrenstrange.googleauth.GoogleAuthenticatorConfig.GoogleAuthenticatorConfigBuilder()
+                                        .setWindowSize(10) // 容錯 10 個區間 = 5 分鐘
+                                        .build();
+                        com.warrenstrange.googleauth.GoogleAuthenticator gAuth = new com.warrenstrange.googleauth.GoogleAuthenticator(
+                                        config);
                         int codeInt = Integer.parseInt(code);
                         return gAuth.authorize(secret, codeInt);
                 } catch (NumberFormatException e) {
                         return false;
                 }
+        }
+
+        public AuthResponse verifyOAuth2TwoFactor(com.example.demo.dto.OAuth2TwoFactorRequest request) {
+                if (!tokenProvider.validateToken(request.getPreAuthToken())) {
+                        throw new RuntimeException("Invalid or expired 2FA token");
+                }
+
+                String email = tokenProvider.getEmailFromToken(request.getPreAuthToken());
+                String roleClaim = tokenProvider.getRoleFromToken(request.getPreAuthToken());
+
+                if (!"PRE_AUTH".equals(roleClaim)) {
+                        throw new RuntimeException("Invalid token type");
+                }
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                if (!verify2FACode(user.getTwoFactorSecret(), request.getCode())) {
+                        throw new RuntimeException("Invalid 2FA code");
+                }
+
+                // Verify success -> issue real tokens
+                String accessToken = tokenProvider.generateAccessToken(user.getEmail(),
+                                Boolean.TRUE.equals(user.getIsStore()) ? "STORE" : "USER");
+                String refreshToken = tokenProvider.generateRefreshToken(user.getEmail());
+
+                return AuthResponse.builder()
+                                .accessToken(accessToken)
+                                .refreshToken(refreshToken)
+                                .tokenType("Bearer")
+                                .expiresIn(accessTokenExpirationMs / 1000)
+                                .user(mapToUserResponse(user))
+                                .build();
         }
 
         public AuthResponse refreshToken(String refreshToken) {

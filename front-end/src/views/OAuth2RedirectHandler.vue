@@ -14,6 +14,7 @@ import { onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { userAPI } from '@/api/user';
+import { authAPI } from '@/api/auth';
 import Swal from 'sweetalert2';
 
 const route = useRoute();
@@ -23,6 +24,65 @@ const authStore = useAuthStore();
 onMounted(async () => {
   const accessToken = route.query.accessToken;
   const refreshToken = route.query.refreshToken;
+
+  const require2fa = route.query.require2fa === 'true';
+  const preAuthToken = route.query.preAuthToken;
+
+  if (require2fa && preAuthToken) {
+    try {
+      const { value: code } = await Swal.fire({
+        title: '雙因素驗證 (2FA)',
+        input: 'text',
+        inputLabel: '請輸入 Authenticator App 上的 6 位數驗證碼',
+        inputPlaceholder: '例如：123456',
+        inputValue: '',
+        showCancelButton: true,
+        confirmButtonText: '驗證',
+        cancelButtonText: '取消',
+        confirmButtonColor: '#9f9572',
+        inputValidator: (value) => {
+          if (!value || value.length !== 6 || !/^\d+$/.test(value)) {
+            return '請輸入有效的 6 位數字驗證碼';
+          }
+        },
+        allowOutsideClick: false
+      });
+
+      if (code) {
+        // 發送 OAuth2 2FA 驗證請求
+        const verifyRes = await authAPI.oauth2Verify2FA({ preAuthToken, code });
+        const { accessToken: newAccess, refreshToken: newRefresh, user } = verifyRes.data;
+
+        // 登入成功，儲存 Token 並設定 Pinia store
+        localStorage.setItem('accessToken', newAccess);
+        localStorage.setItem('refreshToken', newRefresh);
+        authStore.login(user, newAccess, newRefresh);
+
+        await Swal.fire({
+          icon: 'success',
+          title: '登入成功！',
+          html: `歡迎回來, <b>${authStore.userName}</b>`,
+          timer: 1500,
+          showConfirmButton: false
+        });
+        
+        router.push('/');
+      } else {
+        // 使用者取消輸入
+        router.push('/login');
+      }
+    } catch (error) {
+      console.error('OAuth2 2FA failed', error);
+      Swal.fire({
+        icon: 'error',
+        title: '驗證失敗',
+        text: error.response?.data?.message || '無效的驗證碼，請重新登入',
+        confirmButtonColor: '#9f9572'
+      });
+      router.push('/login');
+    }
+    return;
+  }
 
   if (accessToken && refreshToken) {
     try {

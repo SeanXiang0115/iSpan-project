@@ -39,6 +39,13 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", response));
     }
 
+    @PostMapping("/oauth2/2fa-verify")
+    public ResponseEntity<ApiResponse<AuthResponse>> oauth2Verify2FA(
+            @Valid @RequestBody OAuth2TwoFactorRequest request) {
+        AuthResponse response = authService.verifyOAuth2TwoFactor(request);
+        return ResponseEntity.ok(ApiResponse.success("OAuth2 Login successful", response));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
         UserResponse response = userService.getCurrentUser();

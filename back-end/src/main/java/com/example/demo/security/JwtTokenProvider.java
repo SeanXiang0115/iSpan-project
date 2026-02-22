@@ -54,6 +54,11 @@ public class JwtTokenProvider {
         return generateToken(email, null, null, refreshTokenExpirationMs);
     }
 
+    public String generatePreAuthToken(String email) {
+        // 提供一個 5 分鐘的短暫 token 用於 2FA
+        return generateToken(email, "PRE_AUTH", null, 5 * 60 * 1000); // 5 minutes
+    }
+
     private String generateToken(String email, String role, String position, long expirationMs) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
