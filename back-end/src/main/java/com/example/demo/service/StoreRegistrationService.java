@@ -30,10 +30,7 @@ public class StoreRegistrationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 檢查是否已是商家
-        if (user.getIsStore()) {
-            throw new RuntimeException("User is already a store owner");
-        }
+        // 允許已是商家的使用者提交申請 (作為修改資料用)
 
         // 檢查是否有 PENDING 或 RETURNED 的申請
         // 若有 RETURNED，應引導使用者使用 updateApplication，但這邊先做嚴格阻擋
@@ -130,17 +127,20 @@ public class StoreRegistrationService {
         user.setIsStore(true);
         userRepository.save(user);
 
-        // create store info
-        StoresInfo storeInfo = new StoresInfo();
+        // create or update store info
+        StoresInfo storeInfo = storeInfoRepository.findByUser(user).orElse(new StoresInfo());
         storeInfo.setUser(user);
         storeInfo.setStoreName(
                 registration.getStoreName() != null ? registration.getStoreName() : registration.getName() + "的店"); // Fallback
                                                                                                                     // name
         storeInfo.setStorePhone(registration.getPhone());
         storeInfo.setAddress(registration.getAddress());
-        // Default values
-        storeInfo.setTimeSlot(30);
-        storeInfo.setTimeLimit(90);
+
+        // Default values only for new StoresInfo
+        if (storeInfo.getStoreId() == null) {
+            storeInfo.setTimeSlot(30);
+            storeInfo.setTimeLimit(90);
+        }
 
         storeInfoRepository.save(storeInfo);
     }
