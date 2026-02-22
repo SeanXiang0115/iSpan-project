@@ -152,6 +152,7 @@ const routes = [
   {
     path: '/admin',
     component: () => import('@/layouts/admin.vue'),
+    meta: { requiresAdminAuth: true },
     children: [
       {
         path: '',
@@ -241,7 +242,9 @@ const routes = [
       {
         path: 'admins/list',
         name: 'AdminsList',
-        component: () => import('@/views/AdminListView.vue') // placeholder
+        component: () => import('@/views/AdminListView.vue'), // placeholder
+        // TODO: 測試完成後，移除此行恢復強制登入檢查
+        meta: { requiresAdminAuth: false }
       }
     ]
   },
@@ -277,11 +280,34 @@ const router = createRouter({
 
 
 import { useAuthStore } from '@/stores/auth';
+import { useAdminAuthStore } from '@/stores/adminAuth';
 import Swal from 'sweetalert2';
 
 // 路由守衛
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
+  const adminAuthStore = useAdminAuthStore();
+
+  if (to.meta.requiresAdminAuth) {
+    // [直接檢查 Local Storage 的方式]
+    // 說明：若希望連「手動刪除 Local Storage」時，也能在切換頁面瞬間立刻攔截，可取消以下註解
+    // const localAdminToken = localStorage.getItem('adminAccessToken');
+    // if (!localAdminToken) {
+    //   await adminAuthStore.handleLogoutAndNotify('unauthorized');
+    //   return next('/admin/login');
+    // }
+
+    // Check if token is expired, useAdminAuthStore.isExpired will be implemented next
+    if (adminAuthStore.isExpired) {
+      await adminAuthStore.handleLogoutAndNotify('timeout');
+      return next('/admin/login');
+    }
+
+    if (!adminAuthStore.isLoggedIn) {
+      await adminAuthStore.handleLogoutAndNotify('unauthorized');
+      return next('/admin/login');
+    }
+  }
 
   if (to.meta.requiresAuth) {
     if (authStore.isExpired) {

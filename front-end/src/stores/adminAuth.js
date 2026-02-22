@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { isTokenExpired } from '@/utils/jwt';
 
 const safeJSONParse = (val) => {
     try {
@@ -19,7 +20,8 @@ export const useAdminAuthStore = defineStore('adminAuth', {
     }),
 
     getters: {
-        isLoggedIn: (state) => !!state.accessToken,
+        isLoggedIn: (state) => !!state.accessToken && !isTokenExpired(state.accessToken),
+        isExpired: (state) => !!state.accessToken && isTokenExpired(state.accessToken),
         adminName: (state) => state.admin ? state.admin.name : '',
         adminPosition: (state) => state.admin ? state.admin.position : '',
     },
@@ -49,6 +51,21 @@ export const useAdminAuthStore = defineStore('adminAuth', {
             localStorage.removeItem('adminAccount');
             localStorage.removeItem('adminName');
             localStorage.removeItem('adminPosition');
+        },
+
+        async handleLogoutAndNotify(type = 'timeout') {
+            this.logout();
+            const config = type === 'timeout'
+                ? { title: '登入已逾時', text: '管理員登入工作階段已到期，請重新登入' }
+                : { title: '請先登入', text: '此頁面需要管理員權限才能訪問' };
+
+            const Swal = (await import('sweetalert2')).default;
+            await Swal.fire({
+                icon: 'warning',
+                title: config.title,
+                text: config.text,
+                confirmButtonText: type === 'timeout' ? '重新登入' : '前往登入'
+            });
         }
     }
 });

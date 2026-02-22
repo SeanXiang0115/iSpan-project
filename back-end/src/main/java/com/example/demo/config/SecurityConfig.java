@@ -63,8 +63,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 允許訪問認證相關端點
                         .requestMatchers("/api/auth/**").permitAll()
-                        // 允許訪問管理員端點（暫時開放，後續可改為需要 ADMIN 權限）
-                        .requestMatchers("/api/admins/**", "/api/store-registrations/**").permitAll()
+                        // 放行管理員登入
+                        .requestMatchers("/api/admins/login").permitAll()
+                        // TODO: 測試完成後，移除此行恢復強制登入檢查
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/admins").permitAll()
+                        // 鎖定其他管理員 API
+                        .requestMatchers("/api/admins/**").authenticated()
+                        // 允許訪問店鋪註冊端點
+                        .requestMatchers("/api/store-registrations/**").permitAll()
                         // OAuth2 登入端點
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         // 管理員權限端點

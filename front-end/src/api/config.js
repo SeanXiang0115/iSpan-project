@@ -56,12 +56,29 @@ api.interceptors.response.use(
             // Unauthorized or Token Expired
             console.error('Session expired or unauthorized');
 
-            const authStore = useAuthStore();
-            authStore.handleLogoutAndNotify('timeout').then(() => {
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
-                }
-            });
+            const isAdminPath = error.config && error.config.url && (
+                error.config.url.startsWith('/admins') ||
+                (error.config.url.startsWith('/store-registrations') && error.config.method === 'get' && !error.config.url.endsWith('/my')) ||
+                (error.config.url.includes('/review'))
+            );
+
+            if (isAdminPath) {
+                import('@/stores/adminAuth').then(module => {
+                    const adminAuthStore = module.useAdminAuthStore();
+                    adminAuthStore.handleLogoutAndNotify('timeout').then(() => {
+                        if (typeof window !== 'undefined') {
+                            window.location.href = '/admin/login';
+                        }
+                    });
+                });
+            } else {
+                const authStore = useAuthStore();
+                authStore.handleLogoutAndNotify('timeout').then(() => {
+                    if (typeof window !== 'undefined') {
+                        window.location.href = '/login';
+                    }
+                });
+            }
         }
 
         console.error('API Error:', error.response || error.message);
