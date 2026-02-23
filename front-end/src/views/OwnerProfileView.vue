@@ -47,6 +47,7 @@ const fetchStoreInfo = async () => {
       storePhone.value = data.storePhone || '';
       storeAddress.value = data.address || '';
       coverImage.value = data.coverImage || '';
+      myLabels.value = data.categories || []; // 取得現有標籤備份
 
       // 重設上傳與刪除相關狀態
       selectedFile.value = null;
@@ -66,7 +67,8 @@ onMounted(() => {
 });
 
 const addLabel = (newLabel) => {
-  if (!myLabels.value.includes(newLabel)) {
+  // 檢查是否已存在 (根據 ID)
+  if (!myLabels.value.some(tag => tag.categoryId === newLabel.categoryId)) {
     myLabels.value.push(newLabel);
   }
 };
@@ -82,7 +84,8 @@ const startEditing = () => {
     description: storeDescription.value,
     storePhone: storePhone.value,
     address: storeAddress.value,
-    coverImage: coverImage.value
+    coverImage: coverImage.value,
+    categories: [...myLabels.value]
   };
   isEditing.value = true;
 };
@@ -110,6 +113,7 @@ const handleCancel = () => {
       selectedFile.value = null;
       imagePreview.value = null;
       removeImageFlag.value = false;
+      myLabels.value = [...originalData.value.categories];
       isEditing.value = false;
     }
   });
@@ -179,6 +183,11 @@ const handleSave = async () => {
     if (selectedFile.value) {
       formData.append('imageFile', selectedFile.value);
     }
+
+    // 加入標籤 ID 列表
+    myLabels.value.forEach(tag => {
+      formData.append('categoryIds', tag.categoryId);
+    });
 
     await storeAPI.updateMyStoreInfo(formData);
 
@@ -269,9 +278,9 @@ const handleSave = async () => {
     <div class="label-section mb-4">
       <h3 class="text-gdg h5 mb-3">店舖標籤：</h3>
       <div class="tag-list d-flex flex-wrap gap-2">
-        <span v-for="(tag, index) in myLabels" :key="tag"
+        <span v-for="(tag, index) in myLabels" :key="tag.categoryId"
           class="badge rounded-0 border border-gdg text-gdg p-2 d-flex align-items-center">
-          {{ tag }}
+          {{ tag.categoryName }}
           <button v-if="isEditing" @click="removeLabel(index)" class="btn-close ms-2"
             style="font-size: 0.5rem;"></button>
         </span>

@@ -19,6 +19,13 @@ export const storeAPI = {
             config.headers = { 'Content-Type': 'multipart/form-data' };
         }
         return api.put('/owner/store/me', data, config);
+    },
+
+    /**
+     * 獲取所有可用的店家標籤
+     */
+    getAllCategories() {
+        return api.get('/categories');
     }
 };
 

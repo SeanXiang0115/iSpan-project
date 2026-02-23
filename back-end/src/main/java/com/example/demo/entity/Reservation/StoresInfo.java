@@ -19,7 +19,7 @@ public class StoresInfo {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    private User user; // 引用你第一部分的 User Entity
+    private User user; // 引用User Entity
 
     @Column(length = 100)
     private String storeName;

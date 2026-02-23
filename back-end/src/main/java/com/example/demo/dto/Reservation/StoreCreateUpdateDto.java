@@ -1,5 +1,7 @@
 package com.example.demo.dto.Reservation;
 
+import java.util.List;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.constraints.Pattern;
@@ -27,4 +29,7 @@ public class StoreCreateUpdateDto {
 
     // 是否刪除目前圖片
     private Boolean removeImage;
+
+    // 建立店家標籤
+    private List<Integer> categoryIds;
 }
