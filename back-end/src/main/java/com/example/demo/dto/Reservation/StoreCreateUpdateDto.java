@@ -32,4 +32,7 @@ public class StoreCreateUpdateDto {
 
     // 建立店家標籤
     private List<Integer> categoryIds;
+
+    // 指示是否更新標籤 (用於標籤清空邏輯)
+    private Boolean updateCategories;
 }

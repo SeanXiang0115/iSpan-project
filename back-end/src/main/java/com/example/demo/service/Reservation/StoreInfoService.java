@@ -82,11 +82,16 @@ public class StoreInfoService {
         }
 
         // 處理標籤邏輯：先選取標籤，再加入或刪除
-        if (dto.getCategoryIds() != null) {
-            // 找出所有對應的標籤實體
-            List<Category> categories = categoryRepository.findAllById(dto.getCategoryIds());
-            // 更新店家的標籤清單
-            store.setCategories(categories);
+        if (Boolean.TRUE.equals(dto.getUpdateCategories())) {
+            if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
+                // 找出所有對應的標籤實體
+                List<Category> categories = categoryRepository.findAllById(dto.getCategoryIds());
+                // 更新店家的標籤清單
+                store.setCategories(categories);
+            } else {
+                // 若 updateCategories 為 true 且 categoryIds 為空或 null，則清空標籤
+                store.setCategories(java.util.Collections.emptyList());
+            }
         }
         return storeInfoRepository.save(store);
     }

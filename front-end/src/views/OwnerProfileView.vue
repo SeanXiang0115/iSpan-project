@@ -189,6 +189,9 @@ const handleSave = async () => {
       formData.append('categoryIds', tag.categoryId);
     });
 
+    // 標示需要更新標籤 (即使是空列表)
+    formData.append('updateCategories', 'true');
+
     await storeAPI.updateMyStoreInfo(formData);
 
     await Swal.fire({
