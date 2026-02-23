@@ -17,20 +17,20 @@ import com.example.demo.entity.User;
 public class Feedback {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String name;
 
     private String phone;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 500)
     private String contents;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     private String reply;
@@ -53,5 +53,16 @@ public class Feedback {
     @ManyToOne
     @JoinColumn(name = "admin_id")
     private Admin admin;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+
+        if (this.feedbackStatus == null) {
+            FeedbackStatus defaultStatus = new FeedbackStatus();
+            defaultStatus.setStatusId(1);
+            this.feedbackStatus = defaultStatus;
+        }
+    }
 
 }
