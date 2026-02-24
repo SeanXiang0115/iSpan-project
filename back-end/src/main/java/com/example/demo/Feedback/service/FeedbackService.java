@@ -40,7 +40,7 @@ public class FeedbackService {
         // 處理 Type (從 DTO 拿到的 typeId)
         if (dto.getTypeId() != null) {
             FeedbackTypes type = new FeedbackTypes();
-            type.setTypeId(dto.getTypeId()); // 假設 FeedbackTypes 的主鍵叫 typeId
+            type.setTypeId(dto.getTypeId());
             feedback.setFeedbackTypes(type);
         }
 

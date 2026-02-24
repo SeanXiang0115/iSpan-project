@@ -204,6 +204,7 @@
 
 <script>
 import { ref, computed } from 'vue';
+import axios from 'axios';
 
 export default {
   name: 'FeedbackView',
@@ -303,8 +304,26 @@ export default {
         const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         reportNumber.value = `FB${timestamp.toString().slice(-6)}${random}`;
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Map Issue Type
+        const issueTypeMap = {
+          '商店資訊有誤': 1,
+          '網站使用回饋': 2,
+          '服務品質問題': 3,
+          '功能建議': 4,
+          '技術問題': 5,
+          '其他': 6
+        };
+
+        const payload = {
+          name: formData.value.contactName,
+          phone: formData.value.contactPhone,
+          email: formData.value.email,
+          contents: formData.value.feedbackContent,
+          typeId: issueTypeMap[formData.value.issueType] || 1 // Fallback to 1 just in case
+        };
+
+        // Real API call
+        await axios.post('http://localhost:8080/api/feedback', payload);
 
         // Show success banner
         showSuccessMessage.value = true;

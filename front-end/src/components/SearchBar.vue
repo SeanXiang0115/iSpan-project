@@ -33,7 +33,7 @@
         <input 
           type="text" 
           v-model="searchQuery" 
-          placeholder="找餐廳、農場、市集"
+          placeholder="尋找美味"
           @keyup.enter="confirmSearch"
         />
         <button class="search-btn" @click="confirmSearch">
@@ -118,7 +118,7 @@ $gdg-gold-dark: #776f54;
   max-width: 650px;
   margin: 20px auto;
   padding: 0 10px;
-  background: #fff;
+  background: transparent;
   position: relative;
 }
 
@@ -242,6 +242,8 @@ $gdg-gold-dark: #776f54;
     outline: none;
     padding: 8px;
     font-size: 16px;
+    background: transparent;
+    color: #333;
     &::placeholder { color: #ccc; }
   }
 
