@@ -16,11 +16,15 @@ public class ReservationSettingsDto {
 
     @Data
     public static class SeatSettingsDto {
-        
+        private Integer seatType;
+        private Integer totalCount;
     }
 
     @Data
     public static class OpenHourDto {
-        
+        private Integer dayOfWeek; // 0-6 代表周日到周六
+        private String openTime; // 格式 "HH:mm"
+        private String closeTime; // 格式 "HH:mm"
+        private Boolean isClosed; // 是否全天休息
     }
 }

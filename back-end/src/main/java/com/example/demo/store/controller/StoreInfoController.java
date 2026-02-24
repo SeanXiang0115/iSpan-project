@@ -10,7 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.example.demo.dto.ApiResponse;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/owner/store")
@@ -22,13 +21,14 @@ public class StoreInfoController {
     // 獲取當前登入店家的資訊
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<StoresInfo>> getMyStoreInfo() {
-        Optional<StoresInfo> storeOpt = storeInfoService.getMyStoreInfo();
-
-        if (storeOpt.isEmpty()) {
-            return ResponseEntity.status(403).body(ApiResponse.error("您目前不具備店家身分"));
+        try {
+            // 直接呼叫，如果沒店，BaseStoreService 會直接噴 RuntimeException
+            StoresInfo store = storeInfoService.getMyStore();
+            return ResponseEntity.ok(ApiResponse.success(store));
+        } catch (RuntimeException e) {
+            // 統一捕捉異常訊息並回傳
+            return ResponseEntity.status(403).body(ApiResponse.error(e.getMessage()));
         }
-
-        return ResponseEntity.ok(ApiResponse.success(storeOpt.get()));
     }
 
     // 更新當前店家的資訊 (支援圖片上傳，使用 multipart/form-data)

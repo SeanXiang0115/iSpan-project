@@ -1,16 +1,12 @@
 package com.example.demo.store.service;
 
-import com.example.demo.entity.User;
 import com.example.demo.store.dto.StoreCreateUpdateDto;
 import com.example.demo.store.entity.Category;
 import com.example.demo.store.entity.StoresInfo;
 import com.example.demo.store.repository.CategoryRepository;
 import com.example.demo.store.repository.StoreInfoRepository;
 import com.example.demo.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,41 +16,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
-public class StoreInfoService {
+public class StoreInfoService extends StoreBaseService {
 
-    private final UserRepository userRepository;
-    private final StoreInfoRepository storeInfoRepository;
     private final CategoryRepository categoryRepository;
-
-    // 取得目前登入使用者的 User 實體
-    private User getCurrentUserEntity() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("找不到該登入使用者"));
-    }
 
     // 圖片儲存路徑（從設定檔讀取，若無則使用預設值）
     @Value("${app.upload.store-profile-dir:front-end/public/pictures/StoreProfile}")
     private String uploadDir;
 
-    // 取得目前登入使用者的店家資訊
-    @Transactional(readOnly = true)
-    public Optional<StoresInfo> getMyStoreInfo() {
-        User user = getCurrentUserEntity();
-        return storeInfoRepository.findByUser_Id(user.getId());
+    // 手動寫建構子來調用 super(...)
+    public StoreInfoService(UserRepository userRepository, 
+                            StoreInfoRepository storeInfoRepository, 
+                            CategoryRepository categoryRepository) {
+        super(userRepository, storeInfoRepository); // 將依賴傳遞給父類別
+        this.categoryRepository = categoryRepository;
     }
 
     // 更新店家資訊，預設輸入 null，表示不更新該欄位資料
     @Transactional
     public StoresInfo updateMyStoreInfo(StoreCreateUpdateDto dto) {
-        User user = getCurrentUserEntity();
-        StoresInfo store = storeInfoRepository.findByUser_Id(user.getId())
-                .orElseThrow(() -> new RuntimeException("找不到該店家的資訊或您不具備店家身分"));
+
+        // 取得目前登入使用者的店家
+        StoresInfo store = getMyStore();
 
         // 變更名稱
         if (dto.getStoreName() != null) {
