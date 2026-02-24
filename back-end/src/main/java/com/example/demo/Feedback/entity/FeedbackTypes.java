@@ -1,4 +1,4 @@
-package com.example.demo.entity.Feedback;
+package com.example.demo.Feedback.entity;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,17 +12,18 @@ import jakarta.persistence.*;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "feedback_status")
-public class FeedbackStatus {
+@Table(name = "feedback_types")
+public class FeedbackTypes {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long statusId;
+    private Long typeId;
 
     @Column(name = "name", nullable = false)
-    private String statusName;
+    private String typeName;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "feedbackStatus")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "feedbackTypes")
     private List<Feedback> feedbacks;
+
 }

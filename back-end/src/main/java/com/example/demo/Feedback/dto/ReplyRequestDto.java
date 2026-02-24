@@ -1,4 +1,4 @@
-package com.example.demo.dto.Feedback;
+package com.example.demo.Feedback.dto;
 
 import lombok.Data;
 

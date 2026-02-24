@@ -1,4 +1,4 @@
-package com.example.demo.entity.Feedback;
+package com.example.demo.Feedback.entity;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

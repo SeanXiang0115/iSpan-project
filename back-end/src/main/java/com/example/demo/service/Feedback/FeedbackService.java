@@ -4,11 +4,11 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.dto.Feedback.FeedbackRequestDto;
-import com.example.demo.entity.Feedback.Feedback;
+import com.example.demo.Feedback.dto.FeedbackRequestDto;
+import com.example.demo.Feedback.entity.Feedback;
+import com.example.demo.Feedback.repository.FeedbackRepository;
+import com.example.demo.Feedback.repository.FeedbackStatusRepository;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.repository.Feedback.FeedbackRepository;
-import com.example.demo.repository.Feedback.FeedbackStatusRepository;
 
 import lombok.RequiredArgsConstructor;
 

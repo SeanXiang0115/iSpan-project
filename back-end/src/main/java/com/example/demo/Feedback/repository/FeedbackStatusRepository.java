@@ -1,8 +1,8 @@
-package com.example.demo.repository.Feedback;
+package com.example.demo.Feedback.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import com.example.demo.entity.Feedback.FeedbackStatus;
+import com.example.demo.Feedback.entity.FeedbackStatus;
 
 public interface FeedbackStatusRepository extends JpaRepository<FeedbackStatus, Long> {
 
