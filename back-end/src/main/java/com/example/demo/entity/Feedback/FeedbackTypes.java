@@ -18,7 +18,7 @@ public class FeedbackTypes {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Integer typeId;
+    private Long typeId;
 
     @Column(name = "name", nullable = false)
     private String typeName;

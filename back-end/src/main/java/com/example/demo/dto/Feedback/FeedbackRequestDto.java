@@ -12,5 +12,5 @@ public class FeedbackRequestDto {
 
     private String contents;
 
-    private Integer typeId;
+    private Long typeId;
 }

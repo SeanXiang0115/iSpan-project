@@ -8,8 +8,8 @@ public class ReplyRequestDto {
 
     private String reply;
 
-    private Integer statusId;
+    private Long statusId;
 
-    private Integer adminId;
+    private Long adminId;
 
 }

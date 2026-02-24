@@ -60,7 +60,7 @@ public class Feedback {
 
         if (this.feedbackStatus == null) {
             FeedbackStatus defaultStatus = new FeedbackStatus();
-            defaultStatus.setStatusId(1);
+            defaultStatus.setStatusId(1L);
             this.feedbackStatus = defaultStatus;
         }
     }

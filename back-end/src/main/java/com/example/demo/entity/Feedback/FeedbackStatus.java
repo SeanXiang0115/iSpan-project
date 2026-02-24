@@ -18,7 +18,7 @@ public class FeedbackStatus {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Integer statusId;
+    private Long statusId;
 
     @Column(name = "name", nullable = false)
     private String statusName;
