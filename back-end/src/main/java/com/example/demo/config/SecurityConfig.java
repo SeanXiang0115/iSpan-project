@@ -67,6 +67,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admins/**").permitAll()
                         // OAuth2 登入端點
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // 地圖搜尋端點：允許匿名存取（搜尋不需要登入）
+                        .requestMatchers("/api/map/**").permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,

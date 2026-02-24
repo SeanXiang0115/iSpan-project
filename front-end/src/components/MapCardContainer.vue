@@ -1,26 +1,46 @@
 <script setup>
-import { ref } from 'vue';
+import { computed } from 'vue';
+import { useMapSearchStore } from '@/stores/mapSearchStore';
 import MapStoreCard from './MapStoreCard.vue';
-import storeData from '@/data/stores.json';
 
-const stores = ref(storeData);
+const mapSearchStore = useMapSearchStore();
 
+// 直接使用 store 的搜尋結果
+const stores = computed(() => mapSearchStore.results);
 </script>
 
 <template>
     <div class="map-card-container">
         <div class="p-2">
-            <h5 class="mb-3 ps-1 fw-bold text-secondary">搜尋結果 ({{ stores.length }})</h5>
-            <MapStoreCard v-for="(store, index) in stores" :key="index" :store="store" />
+            <!-- 載入中狀態 -->
+            <div v-if="mapSearchStore.loading" class="text-center py-4 text-secondary">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                搜尋中...
+            </div>
+
+            <!-- 錯誤狀態 -->
+            <div v-else-if="mapSearchStore.error" class="alert alert-warning py-2 small">
+                {{ mapSearchStore.error }}
+            </div>
+
+            <!-- 無結果 -->
+            <div v-else-if="stores.length === 0" class="text-center py-4 text-secondary small">
+                <i class="bi bi-search me-1"></i>請輸入關鍵字或選擇標籤進行搜尋
+            </div>
+
+            <!-- 搜尋結果 -->
+            <template v-else>
+                <h5 class="mb-3 ps-1 fw-bold text-secondary">搜尋結果 ({{ stores.length }})</h5>
+                <MapStoreCard v-for="store in stores" :key="store.storeId" :store="store" />
+            </template>
         </div>
     </div>
 </template>
 
 <style scoped>
 .map-card-container {
-    height: 100%; /* Fill parent flex container */
+    height: 100%;
     overflow-y: auto;
-    /* background-color: #f8f9fa; Light gray background */
 }
 
 /* Custom scrollbar for Webkit (Chrome, Safari, Edge) */
