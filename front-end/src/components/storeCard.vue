@@ -1,7 +1,8 @@
 <script setup>
 import {useCartStore} from '@/stores/cart'
+import { useProductsDepot } from '@/stores/productsDepot';
 import Swal from 'sweetalert2';
-import productsData from '@/data/productsData.json'
+
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import BaseCard from '@/components/common/BaseCard.vue';
@@ -9,7 +10,8 @@ import BaseButton from '@/components/common/BaseButton.vue';
 
 const router = useRouter();
 const cartStore = useCartStore()
-const products = ref(productsData);
+const depot = useProductsDepot();
+
 
 const goToDetail = (id) =>{
     //點擊進入商品詳情
@@ -39,20 +41,30 @@ const addToCart = (item) => {
 }
 
 
-const productsList = computed(()=>{
-    const newList =products.value.map(x => {
-        let newData = {
-            id: x.id,
-            productName: x.productName,
-            price: x.price,
-            description: x.description,
-            image: x.image
-        }
-        return newData
-    })
-    return newList
-})
+// const productsList = computed(()=>{
+//     const newList =products.value.map(x => {
+//         let newData = {
+//             id: x.id,
+//             productName: x.productName,
+//             price: x.price,
+//             description: x.description,
+//             image: x.image
+//         }
+//         return newData
+//     })
+//     return newList
+// })
 
+
+const productsList = computed(() => {
+    return depot.products.map(x =>({
+        id: x.id,
+        productName: x.productName,
+        price:x.price,
+        description: x.description,
+        image: x.image
+    }));
+});
 
 
 </script>

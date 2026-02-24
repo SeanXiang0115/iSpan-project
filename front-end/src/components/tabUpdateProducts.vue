@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { useProductsDepot } from '@/stores/productsDepot';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 
 const depot = useProductsDepot();
 const selectedId = ref('');
@@ -17,17 +18,45 @@ watch(selectedId, (newId) => {
     }
 });
 
-const handleUpdate = () => {
-    const index = depot.products.findIndex(p => p.id === editForm.value.id);
-    if (index !== -1) {
-        // 更新 Store 裡的資料
-        depot.products[index] = { ...editForm.value };
-        
-        Swal.fire({
-            icon: 'success',
-            title: '商品更新成功',
-            timer: 1500
+const handleUpdate = async () => {
+    try{
+        const response = await axios.put(`http://localhost:8080/api/products/${editForm.value.id}`, {
+                productName: editForm.value.productName,
+                price: editForm.value.price,
+                image: editForm.value.image,
+                description: editForm.value.description,
+                availableQuantity: editForm.value.availableQuantity
+            
         });
+
+        const index = depot.products.findIndex(p => p.id === editForm.value.id);
+            if (index !== -1) {
+                // 更新 Store 裡的資料
+                depot.products[index] = { ...editForm.value };
+                
+                Swal.fire({
+                    icon: 'success',
+                    title: '商品更新成功',
+                    timer: 1500
+                });
+            }
+    } catch (error) {
+        console.error("更新失敗", error);
+
+        const errorMessage = error.response?.data || "更新失敗，請稍再試"
+
+        Swal.fire({
+            icon: 'error',
+            title: '更新出錯',
+            text: errorMessage,
+            confirmButtonText: '確定'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                if(error.response?.status === 404) {
+                    window.location.reload();
+                }
+            }
+        })
     }
 };
 
