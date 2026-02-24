@@ -35,6 +35,14 @@ api.interceptors.request.use(
             tokenToUse = adminToken;
         }
 
+        // Always force admin token for /admins endpoints if it exists, to prevent sending userToken
+        if (config.url.startsWith('/admins') && adminToken) {
+            tokenToUse = adminToken;
+        } else if (config.url.startsWith('/admins') && !adminToken) {
+            // If it's an admin path but no admin token, don't send a normal user token
+            tokenToUse = null;
+        }
+
         if (tokenToUse) {
             config.headers.Authorization = `Bearer ${tokenToUse}`;
         }

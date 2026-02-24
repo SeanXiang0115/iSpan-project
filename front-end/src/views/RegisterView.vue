@@ -66,11 +66,21 @@ const handleRegister = async () => {
     router.push('/login');
   } catch (error) {
     console.error('Register failed:', error);
-    const errorMsg = error.response?.data?.message || '註冊失敗，請確認密碼是否符合規定，或該信箱已註冊過';
+    
+    let errorMsg = error.response?.data?.message || '註冊失敗，請確認密碼是否符合規定，或該信箱已註冊過';
+    
+    // Check if there are specific validation errors from the backend (MethodArgumentNotValidException)
+    if (error.response?.data?.data && typeof error.response.data.data === 'object') {
+      const validationErrors = Object.values(error.response.data.data);
+      if (validationErrors.length > 0) {
+        errorMsg = validationErrors.join('<br>');
+      }
+    }
+
     Swal.fire({
       icon: 'error',
       title: '註冊失敗',
-      text: errorMsg,
+      html: errorMsg,
       confirmButtonColor: '#9f9572'
     });
   } finally {

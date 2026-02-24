@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admins/login").permitAll()
                         // TODO: 測試完成後，移除此行恢復強制登入檢查
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/admins").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/admins").permitAll() // 暫時放行新增管理員
                         // 鎖定其他管理員 API，必須具備 ADMIN 權限才能訪問
                         .requestMatchers("/api/admins/**").hasRole("ADMIN")
                         // 允許訪問店鋪註冊端點
@@ -80,6 +81,18 @@ public class SecurityConfig {
                         // .requestMatchers(HttpMethod.DELETE, "/api/users/*").hasRole("ADMIN")
                         // 其他請求需要認證
                         .anyRequest().authenticated())
+                // 處理 /api/** 的未授權請求直接回傳 401 而非重新導向 OAuth2 登入頁
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            if (request.getRequestURI().startsWith("/api/")) {
+                                response.setContentType("application/json;charset=UTF-8");
+                                response.setStatus(401);
+                                response.getWriter().write("{\"success\":false,\"message\":\"Unauthorized: "
+                                        + authException.getMessage() + "\"}");
+                            } else {
+                                response.sendRedirect("/oauth2/authorization/google"); // fallback for non-api
+                            }
+                        }))
                 // OAuth2 登入配置
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
