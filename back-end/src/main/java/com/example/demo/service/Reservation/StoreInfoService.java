@@ -8,6 +8,7 @@ import com.example.demo.repository.Reservation.CategoryRepository;
 import com.example.demo.repository.Reservation.StoreInfoRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,8 +38,9 @@ public class StoreInfoService {
                 .orElseThrow(() -> new RuntimeException("找不到該登入使用者"));
     }
 
-    // 圖片儲存路徑（相對於專案根目錄，或是啟動目錄）
-    private static final String UPLOAD_DIR = "front-end/public/pictures/StoreProfile";
+    // 圖片儲存路徑（從設定檔讀取，若無則使用預設值）
+    @Value("${app.upload.store-profile-dir:front-end/public/pictures/StoreProfile}")
+    private String uploadDir;
 
     // 取得目前登入使用者的店家資訊
     @Transactional(readOnly = true)
@@ -100,9 +102,9 @@ public class StoreInfoService {
     private Path getUploadPath() {
         Path rootPath = Paths.get("").toAbsolutePath();
         if (rootPath.toString().endsWith("back-end")) {
-            return rootPath.getParent().resolve(UPLOAD_DIR);
+            return rootPath.getParent().resolve(uploadDir);
         } else {
-            return rootPath.resolve(UPLOAD_DIR);
+            return rootPath.resolve(uploadDir);
         }
     }
 
