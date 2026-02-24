@@ -49,7 +49,7 @@ const routes = [
     name: 'ShopCart'
   },
   {
-    path: '/storeInfo/:id',
+    path: '/storeInfo/:id?',
     name: 'StoreInfo',
     component: () => import('@/views/StoreInfoView.vue'),
   },

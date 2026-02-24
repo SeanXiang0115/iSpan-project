@@ -17,7 +17,7 @@ public class FeedbackController {
 
     private final FeedbackService feedbackService;
 
-    @PostMapping("/feedback")
+    @PostMapping("/api/feedbackForm")
     public void createFeedback(@RequestBody FeedbackRequestDto dto) {
         feedbackService.createFeedback(dto);
     }
