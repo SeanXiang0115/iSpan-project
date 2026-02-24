@@ -1,7 +1,7 @@
-package com.example.demo.controller.Reservation;
+package com.example.demo.store.controller;
 
-import com.example.demo.entity.Reservation.Category;
-import com.example.demo.repository.Reservation.CategoryRepository;
+import com.example.demo.store.entity.Category;
+import com.example.demo.store.repository.CategoryRepository;
 import com.example.demo.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

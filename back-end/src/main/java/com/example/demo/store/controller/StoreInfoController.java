@@ -1,8 +1,8 @@
-package com.example.demo.controller.Reservation;
+package com.example.demo.store.controller;
 
-import com.example.demo.dto.Reservation.StoreCreateUpdateDto;
-import com.example.demo.entity.Reservation.StoresInfo;
-import com.example.demo.service.Reservation.StoreInfoService;
+import com.example.demo.store.dto.StoreCreateUpdateDto;
+import com.example.demo.store.entity.StoresInfo;
+import com.example.demo.store.service.StoreInfoService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

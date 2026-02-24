@@ -1,10 +1,11 @@
-package com.example.demo.repository.Reservation;
+package com.example.demo.store.repository;
 
-import com.example.demo.entity.Reservation.StoresInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import com.example.demo.store.entity.StoresInfo;
 
 import java.util.Optional;
 

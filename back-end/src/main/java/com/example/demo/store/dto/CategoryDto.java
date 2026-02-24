@@ -1,4 +1,4 @@
-package com.example.demo.dto.Reservation;
+package com.example.demo.store.dto;
 
 import lombok.Data;
 

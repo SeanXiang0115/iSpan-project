@@ -1,11 +1,11 @@
-package com.example.demo.service.Reservation;
+package com.example.demo.store.service;
 
-import com.example.demo.dto.Reservation.StoreCreateUpdateDto;
-import com.example.demo.entity.Reservation.Category;
-import com.example.demo.entity.Reservation.StoresInfo;
 import com.example.demo.entity.User;
-import com.example.demo.repository.Reservation.CategoryRepository;
-import com.example.demo.repository.Reservation.StoreInfoRepository;
+import com.example.demo.store.dto.StoreCreateUpdateDto;
+import com.example.demo.store.entity.Category;
+import com.example.demo.store.entity.StoresInfo;
+import com.example.demo.store.repository.CategoryRepository;
+import com.example.demo.store.repository.StoreInfoRepository;
 import com.example.demo.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
