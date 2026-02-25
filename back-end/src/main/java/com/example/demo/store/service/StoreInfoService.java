@@ -63,7 +63,7 @@ public class StoreInfoService extends StoreBaseService {
 
         // 處理圖片邏輯：若有上傳新圖，則優先執行上傳(會覆蓋舊圖)；若無新圖但要求刪除，則執行刪除
         if (dto.getImageFile() != null && !dto.getImageFile().isEmpty()) {
-            handleImageUpload(store, dto.getImageFile());
+            imageUpload(store, dto.getImageFile());
         } else if (Boolean.TRUE.equals(dto.getRemoveImage())) { // 寫這樣在上傳新圖後反悔取消時才不會刪除舊有圖片
             removeExistingImage(store);
         }
@@ -95,18 +95,11 @@ public class StoreInfoService extends StoreBaseService {
 
     // 刪除圖片
     private void removeExistingImage(StoresInfo store) {
-        if (store.getCoverImage() != null && !store.getCoverImage().isEmpty()) { //
-            Path uploadPath = getUploadPath();
-            Path oldFilePath = uploadPath.resolve(store.getCoverImage());
+        if (store.getCoverImage() != null && !store.getCoverImage().isEmpty()) { // 確保有圖片才嘗試刪除
+            Path oldFilePath = getUploadPath().resolve(store.getCoverImage());
             try {
                 // 嘗試刪除檔案
-                boolean deleted = Files.deleteIfExists(oldFilePath);
-
-                // 檔案一定要存在且成功刪除才算成功
-                if (!deleted) {
-                    throw new IOException("沒有圖片檔案，無法刪除");
-                }
-
+                Files.deleteIfExists(oldFilePath);
             } catch (IOException e) {
                 // 拋出例外中斷執行
                 throw new RuntimeException("無法刪除舊圖片，上傳終止: " + e.getMessage());
@@ -118,7 +111,10 @@ public class StoreInfoService extends StoreBaseService {
     }
 
     // 圖片上傳的執行
-    private void handleImageUpload(StoresInfo store, MultipartFile file) {
+    private void imageUpload(StoresInfo store, MultipartFile file) {
+        if(file.isEmpty()) {
+            throw new IllegalArgumentException("上傳的圖片檔案不得為空");
+        }
         try {
             // 1. 確定儲存路徑
             Path uploadPath = getUploadPath();
@@ -147,7 +143,7 @@ public class StoreInfoService extends StoreBaseService {
             store.setCoverImage(fileName);
 
         } catch (IOException e) {
-            throw new RuntimeException("圖片儲存失敗: " + e.getMessage());
+            throw new RuntimeException("伺服器異常，上傳終止: " + e.getMessage());
         }
     }
 
