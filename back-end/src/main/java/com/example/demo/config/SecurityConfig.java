@@ -63,10 +63,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 允許訪問認證相關端點
                         .requestMatchers("/api/auth/**").permitAll()
+                        // 客服新增：允許匿名提交客訴
+                        .requestMatchers("/api/feedback/**").permitAll()
                         // 允許訪問管理員端點（暫時開放，後續可改為需要 ADMIN 權限）
                         .requestMatchers("/api/admins/**").permitAll()
                         // OAuth2 登入端點
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // 地圖搜尋端點：允許匿名存取（搜尋不需要登入）
+                        .requestMatchers("/api/map/**").permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,

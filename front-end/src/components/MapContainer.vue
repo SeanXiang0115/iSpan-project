@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, ref, watch, onUnmounted } from 'vue';
+import { onMounted, watch, onUnmounted } from 'vue';
+import { useMapSearchStore } from '@/stores/mapSearchStore';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -15,53 +16,58 @@ L.Icon.Default.mergeOptions({
     shadowUrl: markerShadow
 });
 
+const mapSearchStore = useMapSearchStore();
+
 let map = null;
-const markersGroup = L.layerGroup(); // 建立一個圖層群組，方便統一管理標記
+const markersGroup = L.layerGroup();
 
-// 1. 模擬動態接收的 API 資料 (這部分未來會從後端取得)
-const searchResults = ref([
-    { id: 1, title: '台北 101', lat: 25.0336, lng: 121.5648 },
-    { id: 2, title: '國父紀念館', lat: 25.0394, lng: 121.5595 }
-]);
-
-// 2. 動態循環：將資料陣列轉換成地圖上的圖釘
+/**
+ * 依搜尋結果更新地圖圖釘
+ * 每筆資料需有 latitude / longitude 欄位
+ */
 const updateMarkers = (data) => {
     if (!map) return;
-    
-    markersGroup.clearLayers(); // 先清除舊的圖釘，避免搜尋後圖釘疊在一起
 
-    data.forEach(item => {
-        const marker = L.marker([item.lat, item.lng])
-            .bindPopup(`<b>${item.title}</b><br>座標: ${item.lat}, ${item.lng}`);
-        
-        markersGroup.addLayer(marker); // 將個別圖釘加入群組
+    markersGroup.clearLayers();
+
+    if (!data || data.length === 0) return;
+
+    data.forEach(store => {
+        if (!store.latitude || !store.longitude) return;
+        const marker = L.marker([store.latitude, store.longitude])
+            .bindPopup(
+                `<b>${store.storeName}</b><br>` +
+                `<small>${store.address || ''}</small>`
+            );
+        markersGroup.addLayer(marker);
     });
 
-    markersGroup.addTo(map); // 將整組圖釘放上地圖
+    markersGroup.addTo(map);
+
+    // 自動調整地圖視野以涵蓋所有圖釘
+    if (markersGroup.getLayers().length > 0) {
+        const group = L.featureGroup(markersGroup.getLayers());
+        map.fitBounds(group.getBounds().pad(0.2));
+    }
 };
 
 onMounted(() => {
-    // Initialize map
     map = L.map('leaflet-map').setView([25.0339, 121.5644], 13);
-    
-    // Add tile layer (OpenStreetMap)
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
-
-    // 初始執行一次畫圖釘
-    updateMarkers(searchResults.value);
 });
 
-// 3. 監聽資料變化：當 API 回傳新資料時，地圖會自動更新
-watch(searchResults, (newData) => {
-    updateMarkers(newData);
-}, { deep: true });
+// 監聽 store 中搜尋結果的變化
+watch(
+    () => mapSearchStore.results,
+    (newData) => updateMarkers(newData),
+    { deep: true }
+);
 
 onUnmounted(() => {
-    if (map) {
-        map.remove();
-    }
+    if (map) map.remove();
 });
 </script>
 

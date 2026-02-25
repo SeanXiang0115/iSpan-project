@@ -33,7 +33,7 @@
         <input 
           type="text" 
           v-model="searchQuery" 
-          placeholder="找餐廳、農場、市集"
+          placeholder="尋找美味"
           @keyup.enter="confirmSearch"
         />
         <button class="search-btn" @click="confirmSearch">
@@ -49,8 +49,11 @@
 
 <script setup>
 import { ref, computed } from 'vue';
+import { useMapSearchStore } from '@/stores/mapSearchStore';
 
-const options = ['親子友善','寵物友善', '蔬食', '有插座'];
+const mapSearchStore = useMapSearchStore();
+
+const options = ['親子友善','寵物友善', '蔬食', '插座提供'];
 const isOpen = ref(false);
 const selectedOptions = ref([]); // 變更為陣列以支援複選
 const searchQuery = ref('');
@@ -79,12 +82,10 @@ const toggleOption = (item) => {
   }
 };
 
-const confirmSearch = () => {
-  console.log('送出搜尋:', {
-    categories: selectedOptions.value,
-    keyword: searchQuery.value
-  });
+// 呼叫後端搜尋 API
+const confirmSearch = async () => {
   isOpen.value = false;
+  await mapSearchStore.searchStores(searchQuery.value, selectedOptions.value);
 };
 
 // 點擊外部關閉指令
@@ -117,7 +118,7 @@ $gdg-gold-dark: #776f54;
   max-width: 650px;
   margin: 20px auto;
   padding: 0 10px;
-  background: #fff;
+  background: transparent;
   position: relative;
 }
 
@@ -241,6 +242,8 @@ $gdg-gold-dark: #776f54;
     outline: none;
     padding: 8px;
     font-size: 16px;
+    background: transparent;
+    color: #333;
     &::placeholder { color: #ccc; }
   }
 
