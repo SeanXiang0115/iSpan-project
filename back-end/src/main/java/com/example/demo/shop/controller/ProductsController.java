@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.demo.dto.shop.ProductsDTO;
-import com.example.demo.entity.shop.Products;
-import com.example.demo.exception.ProductNotFoundException;
-import com.example.demo.service.Shop.ProductsService;
+import com.example.demo.shop.dto.ProductsDTO;
+import com.example.demo.shop.entity.Products;
+import com.example.demo.shop.exception.ProductNotFoundException;
+import com.example.demo.shop.service.ProductsService;
 
 
 @RestController
