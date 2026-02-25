@@ -27,7 +27,7 @@ public class FeedbackController {
         feedbackService.createFeedback(dto);
 
         try {
-            mailService.sendComplaintConfirmation(dto.getEmail(), "F" + System.currentTimeMillis());
+            mailService.sendHtmlConfirmation(dto.getEmail(), "F" + System.currentTimeMillis());
         } catch (Exception e) {
             System.err.println("郵件寄送失敗，但資料已存入資料庫: " + e.getMessage());
         }

@@ -2,8 +2,8 @@ package com.example.demo.MapSearch.service;
 
 import com.example.demo.MapSearch.dto.StoreSearchResultDto;
 import com.example.demo.MapSearch.repository.MapSearchRepository;
-import com.example.demo.entity.Reservation.OpenHour;
-import com.example.demo.entity.Reservation.StoresInfo;
+import com.example.demo.store.entity.OpenHour;
+import com.example.demo.store.entity.StoresInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

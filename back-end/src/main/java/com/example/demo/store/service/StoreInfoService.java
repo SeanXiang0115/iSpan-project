@@ -5,7 +5,7 @@ import com.example.demo.store.entity.Category;
 import com.example.demo.store.entity.StoresInfo;
 import com.example.demo.store.repository.CategoryRepository;
 import com.example.demo.store.repository.StoreInfoRepository;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.user.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

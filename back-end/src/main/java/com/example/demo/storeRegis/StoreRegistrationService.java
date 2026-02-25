@@ -2,8 +2,8 @@ package com.example.demo.storeRegis;
 
 import com.example.demo.admin.Admin;
 import com.example.demo.admin.AdminRepository;
-import com.example.demo.entity.Reservation.StoresInfo;
-import com.example.demo.repository.Reservation.StoreInfoRepository;
+import com.example.demo.store.entity.StoresInfo;
+import com.example.demo.store.repository.StoreInfoRepository;
 import com.example.demo.storeRegis.dto.StoreRegistrationRequest;
 import com.example.demo.user.User;
 import com.example.demo.user.UserRepository;

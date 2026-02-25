@@ -6,8 +6,8 @@ import lombok.Setter;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-import com.example.demo.entity.Admin;
-import com.example.demo.entity.User;
+import com.example.demo.admin.Admin;
+import com.example.demo.user.User;
 
 @Getter
 @Setter
