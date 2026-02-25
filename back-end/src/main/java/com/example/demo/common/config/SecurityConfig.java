@@ -1,9 +1,10 @@
 package com.example.demo.common.config;
 
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -23,8 +24,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.demo.common.security.JwtAuthenticationFilter;
 
-import java.util.Arrays;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -74,7 +74,11 @@ public class SecurityConfig {
                         // 允許訪問店鋪註冊端點
                         .requestMatchers("/api/store-registrations/**").permitAll()
                         // OAuth2 登入端點
+                        .requestMatchers("/api/products/**").permitAll()
+                        //放行電商商品相關API
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // 地圖搜尋端點：允許匿名存取（搜尋不需要登入）
+                        .requestMatchers("/api/map/**").permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,
@@ -112,6 +116,7 @@ public class SecurityConfig {
                 .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

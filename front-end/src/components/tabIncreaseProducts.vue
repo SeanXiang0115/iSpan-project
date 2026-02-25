@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useProductsDepot } from '@/stores/productsDepot';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 
 const depot = useProductsDepot();
 
@@ -11,13 +12,35 @@ const form = ref({
     price: 0,
     stock: 0,
     description: '',
-    image: 'https://placehold.co/600x400?text=New+Product' // 預設圖片
+    image: '' // 預設圖片
 });
 
-const handleAddProduct = () => {
+const handleAddProduct =async () => {
     if (!form.value.productName || form.value.price <= 0) {
         Swal.fire('錯誤', '請填寫完整的商品名稱與正確價格', 'error');
         return;
+    }
+
+    try{
+        const response = await axios.post(`http://localhost:8080/api/products/add`, {
+            productName:form.value.productName,
+            price: form.value.price,
+            stock: form.value.stock,
+            description: form.value.description,
+            image: form.value.image 
+        });
+
+        Swal.fire({
+            icon: 'sucess',
+            title: '新增成功',
+            text: '商品已存入資料庫並同步至庫存',
+            timer: 1500
+        });
+
+        form.vale= { productName: '', price: 0, stock: 0 , description: '', image: ''};
+    } catch (error) {
+        console.error("存檔失敗", error);
+        Swal.fire('錯誤', '後端連線失敗，請檢察API是否啟動', 'error')
     }
 
     // 生成新 ID (例如取最後一個 ID + 1)
@@ -32,16 +55,36 @@ const handleAddProduct = () => {
     // 推送到 Store
     depot.products.push(newProduct);
 
-    Swal.fire({
-        icon: 'success',
-        title: '商品新增成功',
-        text: `ID: ${newId} - ${form.value.productName}`,
-        timer: 1500
-    });
+    // Swal.fire({
+    //     icon: 'success',
+    //     title: '商品新增成功',
+    //     text: `ID: ${newId} - ${form.value.productName}`,
+    //     timer: 1500
+    // });
 
-    // 清空表單
-    form.value = { productName: '', price: 0, stock: 0, description: '', image: 'https://placehold.co/600x400?text=New+Product' };
+    // // 清空表單
+    // form.value = { productName: '', price: 0, stock: 0, description: '', image: 'https://placehold.co/600x400?text=New+Product' };
 };
+
+const handleImageUpload = (event) => {
+    const file = event.target.files[0]; //抓選取的檔案
+    if (!file) return;
+
+    if (file.size > 2 *1024 *1024) {
+        Swal.fire('錯誤', '圖片大小不能超過2MB', 'error');
+        return;
+    }
+
+    //fileReader讀取圖片
+    const reader = new FileReader();
+    reader.onload = (e) =>{
+        form.value.image = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}   
+
+
+
 </script>
 
 <template>
@@ -52,6 +95,24 @@ const handleAddProduct = () => {
                 <label>商品名稱</label>
                 <input v-model="form.productName" type="text" placeholder="請輸入商品名稱" />
             </div>
+
+            <div class = "from-group">
+                <label>商品照片</label>
+                <div class="image-upload-wrapper">
+                    <div class = "image-preview" v-if="form.image">
+                        <img :src="form.image" alt="預覽圖" />
+                    </div>
+                    <div class="image-placeholder" v-else>
+                        <span>尚未選擇圖片</span>
+                    </div>
+                    <input type="file"
+                            accept="image/*"
+                            @change="handleImageUpload"
+                            id="file-input"
+                            />
+                </div>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label>售價 (NT$)</label>
@@ -109,4 +170,39 @@ input, textarea {
     background-color: #2a5298; 
     }
     
+
+.image-upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    border: 2px dashed #ccc;
+    padding: 1rem;
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+.image-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 4px;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.image-placeholder {
+    width: 200px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    background: #eee;
+    border-radius: 4px;
+}
+
+#file-input {
+    cursor: pointer;
+    width: 100%;
+}
 </style>
