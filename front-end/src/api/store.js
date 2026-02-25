@@ -26,6 +26,20 @@ export const storeAPI = {
      */
     getAllCategories() {
         return api.get('/categories');
+    },
+
+    /**
+     * 獲取當前店家的預約與座位設定
+     */
+    getReservationSettings() {
+        return api.get('/owner/store/reservation-settings');
+    },
+
+    /**
+     * 更新當前店家的預約與座位設定
+     */
+    updateReservationSettings(data) {
+        return api.put('/owner/store/reservation-settings', data);
     }
 };
 

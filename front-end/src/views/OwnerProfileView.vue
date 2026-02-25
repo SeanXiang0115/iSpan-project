@@ -236,13 +236,7 @@ const handleSave = async () => {
     </div>
 
     <div class="store-name-section mb-4">
-      <div v-if="!isEditing">
-        <h2 class="h3 fw-bold text-gdg">{{ storeName }}</h2>
-      </div>
-      <div v-else>
-        <label class="form-label text-gdg fw-bold">店家名稱：</label>
-        <input type="text" v-model="storeName" class="form-control border-gdg" />
-      </div>
+      <h2 class="h3 fw-bold text-gdg">{{ storeName }}</h2>
     </div>
 
     <div class="info-section mb-4">
@@ -257,25 +251,13 @@ const handleSave = async () => {
     </div>
 
     <div class="info-section mb-4">
-      <div v-if="!isEditing">
-        <label class="form-label text-gdg fw-bold">連絡電話：</label>
-        <p class="p-3 border bg-light">{{ storePhone }}</p>
-      </div>
-      <div v-else>
-        <label class="form-label text-gdg fw-bold">編輯電話：</label>
-        <input type="text" v-model="storePhone" class="form-control border-gdg" />
-      </div>
+      <label class="form-label text-gdg fw-bold">連絡電話：</label>
+      <p class="p-3 border bg-light">{{ storePhone }}</p>
     </div>
 
     <div class="info-section mb-4">
-      <div v-if="!isEditing">
-        <label class="form-label text-gdg fw-bold">店家地址：</label>
-        <p class="p-3 border bg-light">{{ storeAddress }}</p>
-      </div>
-      <div v-else>
-        <label class="form-label text-gdg fw-bold">編輯地址：</label>
-        <input type="text" v-model="storeAddress" class="form-control border-gdg" />
-      </div>
+      <label class="form-label text-gdg fw-bold">店家地址：</label>
+      <p class="p-3 border bg-light">{{ storeAddress }}</p>
     </div>
 
     <div class="label-section mb-4">
