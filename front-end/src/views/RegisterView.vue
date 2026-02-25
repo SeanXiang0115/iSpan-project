@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import { authAPI } from '@/api/auth';
@@ -11,8 +12,36 @@ const email = ref('');
 const password = ref('');
 const isSubmitting = ref(false);
 
+const handleGoogleLogin = () => {
+  window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+};
+
 const handleRegister = async () => {
   if (isSubmitting.value) return;
+
+  // 1. 檢查信箱格式
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email.value)) {
+    Swal.fire({
+      icon: 'error',
+      title: '格式錯誤',
+      text: '帳號格式有誤',
+      confirmButtonColor: '#9f9572'
+    });
+    return;
+  }
+
+  // 2. 檢查密碼格式 (至少8碼，包含大小寫、數字、特殊符號)
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  if (!passwordRegex.test(password.value)) {
+    Swal.fire({
+      icon: 'error',
+      title: '格式錯誤',
+      text: '密碼格式有誤',
+      confirmButtonColor: '#9f9572'
+    });
+    return;
+  }
 
   isSubmitting.value = true;
   const registerData = {
@@ -25,11 +54,35 @@ const handleRegister = async () => {
     console.log('Register attempt with:', registerData);
     const response = await authAPI.register(registerData);
     console.log('Register success:', response);
-    alert("註冊成功");
+    
+    await Swal.fire({
+      icon: 'success',
+      title: '註冊成功',
+      text: '即將為您重新導向至登入頁面',
+      timer: 2000,
+      showConfirmButton: false
+    });
+    
     router.push('/login');
   } catch (error) {
     console.error('Register failed:', error);
-    alert(`註冊請求失敗 (預計傳送到後端的 JSON):\n${JSON.stringify(registerData, null, 2)}`);
+    
+    let errorMsg = error.response?.data?.message || '註冊失敗，請確認密碼是否符合規定，或該信箱已註冊過';
+    
+    // Check if there are specific validation errors from the backend (MethodArgumentNotValidException)
+    if (error.response?.data?.data && typeof error.response.data.data === 'object') {
+      const validationErrors = Object.values(error.response.data.data);
+      if (validationErrors.length > 0) {
+        errorMsg = validationErrors.join('<br>');
+      }
+    }
+
+    Swal.fire({
+      icon: 'error',
+      title: '註冊失敗',
+      html: errorMsg,
+      confirmButtonColor: '#9f9572'
+    });
   } finally {
     isSubmitting.value = false;
   }
@@ -50,7 +103,7 @@ const goToLogin = () => {
       </template>
 
       <div class="d-grid gap-3 pt-2">
-        <BaseButton color="light" size="md" class="social-btn border w-100 py-2 d-flex align-items-center justify-content-center">
+        <BaseButton color="light" size="md" type="button" @click="handleGoogleLogin" class="social-btn border w-100 py-2 d-flex align-items-center justify-content-center">
           <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" width="20" class="me-2">
           <span class="small fw-medium text-dark" style="font-size: 14px;">透過 Google 註冊</span>
         </BaseButton>
@@ -83,6 +136,9 @@ const goToLogin = () => {
             placeholder="請輸入密碼"
             required
           >
+          <div class="form-text text-muted mt-1" style="font-size: 0.8rem;">
+            *密碼需至少 8 個字元，並包含大小寫英文字母、數字及特殊符號
+          </div>
         </div>
 
         <div class="d-grid gap-3 pt-2">

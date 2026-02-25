@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.demo.repository.UserRepository;
+import com.example.demo.user.UserRepository;
 import com.example.demo.store.dto.ReservationSettingsDto;
 import com.example.demo.store.entity.OpenHour;
 import com.example.demo.store.entity.Seat;

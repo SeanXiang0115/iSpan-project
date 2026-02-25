@@ -10,6 +10,14 @@ export const authAPI = {
     },
 
     /**
+     * OAuth2 雙因子驗證
+     * @param {Object} data - { preAuthToken, code }
+     */
+    oauth2Verify2FA(data) {
+        return api.post('/auth/oauth2/2fa-verify', data);
+    },
+
+    /**
      * 使用者註冊
      * @param {Object} data - { email, password, username, phone, ... }
      */

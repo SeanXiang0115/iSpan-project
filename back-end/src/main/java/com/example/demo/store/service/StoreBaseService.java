@@ -1,8 +1,8 @@
 package com.example.demo.store.service;
 
-import com.example.demo.entity.User;
-import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.user.User;
+import com.example.demo.common.exception.ResourceNotFoundException;
+import com.example.demo.user.UserRepository;
 import com.example.demo.store.entity.StoresInfo;
 import com.example.demo.store.repository.StoreInfoRepository;
 

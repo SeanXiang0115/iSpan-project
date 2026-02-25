@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-import com.example.demo.entity.User;
+import com.example.demo.user.User;
 import com.example.demo.store.entity.StoresInfo;
 
 import java.time.LocalDateTime;

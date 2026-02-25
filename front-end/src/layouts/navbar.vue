@@ -102,6 +102,10 @@ const handleMerchantApplication = () => {
           <li class="nav-item">
             <a class="nav-link" href="#" @click.prevent="handleMerchantApplication">申請成為商家</a>
           </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="#" @click.prevent="goTo('/test')">小功能測試區</a>
+          </li>
         </ul>
 
         

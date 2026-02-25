@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { useAuthStore } from '@/stores/auth';
 
 // Create an axios instance with custom config
 const api = axios.create({
@@ -14,10 +15,36 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
     (config) => {
-        // You can add token to headers here
-        const token = localStorage.getItem('accessToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+        // Decide which token to use based on the URL or availability
+        // If it's an admin endpoint or we have an admin token but no user token, use admin token
+        const userToken = localStorage.getItem('accessToken');
+        const adminToken = localStorage.getItem('adminAccessToken');
+
+        let tokenToUse = userToken;
+
+        // Common admin-only paths (or if we are logged in as admin explicitly)
+        // StoreRegistration API mixed paths: /store-registrations is admin GET, user POST
+        const isAdminPath = config.url.startsWith('/admins') ||
+            (config.url.startsWith('/store-registrations') && config.method === 'get' && !config.url.endsWith('/my')) ||
+            (config.url.includes('/review'));
+
+        if (isAdminPath && adminToken) {
+            tokenToUse = adminToken;
+        } else if (!tokenToUse && adminToken) {
+            // fallback if no user token
+            tokenToUse = adminToken;
+        }
+
+        // Always force admin token for /admins endpoints if it exists, to prevent sending userToken
+        if (config.url.startsWith('/admins') && adminToken) {
+            tokenToUse = adminToken;
+        } else if (config.url.startsWith('/admins') && !adminToken) {
+            // If it's an admin path but no admin token, don't send a normal user token
+            tokenToUse = null;
+        }
+
+        if (tokenToUse) {
+            config.headers.Authorization = `Bearer ${tokenToUse}`;
         }
         return config;
     },
@@ -37,12 +64,29 @@ api.interceptors.response.use(
             // Unauthorized or Token Expired
             console.error('Session expired or unauthorized');
 
-            const authStore = useAuthStore();
-            authStore.handleLogoutAndNotify('timeout').then(() => {
-                if (typeof window !== 'undefined') {
-                    window.location.href = '/login';
-                }
-            });
+            const isAdminPath = error.config && error.config.url && (
+                error.config.url.startsWith('/admins') ||
+                (error.config.url.startsWith('/store-registrations') && error.config.method === 'get' && !error.config.url.endsWith('/my')) ||
+                (error.config.url.includes('/review'))
+            );
+
+            if (isAdminPath) {
+                import('@/stores/adminAuth').then(module => {
+                    const adminAuthStore = module.useAdminAuthStore();
+                    adminAuthStore.handleLogoutAndNotify('timeout').then(() => {
+                        if (typeof window !== 'undefined') {
+                            window.location.href = '/admin/login';
+                        }
+                    });
+                });
+            } else {
+                const authStore = useAuthStore();
+                authStore.handleLogoutAndNotify('timeout').then(() => {
+                    if (typeof window !== 'undefined') {
+                        window.location.href = '/login';
+                    }
+                });
+            }
         }
 
         console.error('API Error:', error.response || error.message);

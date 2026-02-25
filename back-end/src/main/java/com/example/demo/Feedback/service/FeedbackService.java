@@ -10,7 +10,7 @@ import com.example.demo.Feedback.entity.Feedback;
 import com.example.demo.Feedback.entity.FeedbackTypes;
 import com.example.demo.Feedback.repository.FeedbackRepository;
 import com.example.demo.Feedback.repository.FeedbackStatusRepository;
-import com.example.demo.repository.UserRepository;
+import com.example.demo.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 

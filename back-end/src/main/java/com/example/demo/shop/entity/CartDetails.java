@@ -2,7 +2,7 @@ package com.example.demo.shop.entity;
 
 import java.math.BigDecimal;
 
-import com.example.demo.entity.User;
+import com.example.demo.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

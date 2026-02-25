@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.example.demo.dto.ApiResponse;
+import com.example.demo.common.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/owner/store")

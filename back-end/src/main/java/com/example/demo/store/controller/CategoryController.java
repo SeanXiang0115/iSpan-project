@@ -2,7 +2,7 @@ package com.example.demo.store.controller;
 
 import com.example.demo.store.entity.Category;
 import com.example.demo.store.repository.CategoryRepository;
-import com.example.demo.dto.ApiResponse;
+import com.example.demo.common.dto.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -240,11 +240,19 @@ const openAddModal = async () => {
 
       console.error('新增管理員時發生錯誤:', error);
       
-      const errorMessage = error.response?.data?.message || '無法連線至伺服器或傳送資料錯誤';
+      let errorMessage = error.response?.data?.message || '無法連線至伺服器或傳送資料錯誤';
+      
+      // Check if there are specific validation errors from the backend
+      if (error.response?.data?.data && typeof error.response.data.data === 'object') {
+        const validationErrors = Object.values(error.response.data.data);
+        if (validationErrors.length > 0) {
+          errorMessage = validationErrors.join('<br>');
+        }
+      }
       
       Swal.fire({
         title: '新增失敗',
-        text: errorMessage,
+        html: errorMessage,
         icon: 'error',
         confirmButtonColor: '#1e3c72'
       });

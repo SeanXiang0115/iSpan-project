@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.example.demo.entity.User;
+import com.example.demo.user.User;
 
 @Data
 @Entity

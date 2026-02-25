@@ -9,8 +9,13 @@ import com.example.demo.store.entity.StoresInfo;
 
 import java.util.Optional;
 
-public interface StoreInfoRepository extends JpaRepository<StoresInfo, Integer> {
+import org.springframework.stereotype.Repository;
+import com.example.demo.user.User;
 
+@Repository
+public interface StoreInfoRepository extends JpaRepository<StoresInfo, Integer> {
     @Query("SELECT s FROM StoresInfo s LEFT JOIN FETCH s.categories WHERE s.user.id = :userId")
     Optional<StoresInfo> findByUser_Id(@Param("userId") Long userId);
+
+    Optional<StoresInfo> findByUser(User user);
 }

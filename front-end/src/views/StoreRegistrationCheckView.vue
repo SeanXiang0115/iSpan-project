@@ -10,9 +10,9 @@
         <li class="nav-item">
           <a 
             class="nav-link" 
-            :class="{ active: currentTab === 'All' }" 
+            :class="{ active: activeTab === 'all' }" 
             href="#" 
-            @click.prevent="setTab('All')"
+            @click.prevent="activeTab = 'all'"
           >
             全部
           </a>
@@ -20,9 +20,9 @@
         <li class="nav-item">
           <a 
             class="nav-link" 
-            :class="{ active: currentTab === '未處理' }" 
+            :class="{ active: activeTab === 'pending' }" 
             href="#" 
-            @click.prevent="setTab('未處理')"
+            @click.prevent="activeTab = 'pending'"
           >
             未處理
           </a>
@@ -30,24 +30,32 @@
         <li class="nav-item">
           <a 
             class="nav-link" 
-            :class="{ active: currentTab === '退回中' }" 
+            :class="{ active: activeTab === 'returned' }" 
             href="#" 
-            @click.prevent="setTab('退回中')"
+            @click.prevent="activeTab = 'returned'"
           >
             退回中
           </a>
         </li>
         <li class="nav-item">
-          <a 
+          <a   
             class="nav-link" 
-            :class="{ active: currentTab === '已結案' }" 
+            :class="{ active: activeTab === 'approved' }" 
             href="#" 
-            @click.prevent="setTab('已結案')"
+            @click.prevent="activeTab = 'approved'"
           >
             已結案
           </a>
         </li>
       </ul>
+      <div class="ms-3 d-flex align-items-center">
+        <label class="me-2 fw-medium text-muted mb-0">申請類別:</label>
+        <select v-model="filterType" class="form-select form-select-sm w-auto border-0 bg-light shadow-sm">
+          <option value="">全部</option>
+          <option value="false">初次註冊</option>
+          <option value="true">資料修改</option>
+        </select>
+      </div>
     </div>
 
     <div class="admin-card overflow-hidden border-top-0 rounded-top-0">
@@ -59,6 +67,7 @@
               <th>申請人帳號</th>
               <th>申請人姓名</th>
               <th>申請時間</th>
+              <th>申請類別</th>
               <th>案件狀態</th>
               <th>審核</th>
             </tr>
@@ -70,17 +79,22 @@
               <td>
                 <span class="fw-medium">{{ item.name }}</span>
               </td>
-              <td>{{ item.applytime }}</td>
+              <td>{{ formatDate(item.createdAt) }}</td>
+              <td>
+                <span class="badge" :class="item.isUpdate ? 'bg-primary' : 'bg-success'">
+                  {{ item.isUpdate ? '資料修改' : '初次註冊' }}
+                </span>
+              </td>
               <td>
                 <span :class="['status-badge', getStatusClass(item.status)]">
-                  {{ item.status }}
+                  {{ getStatusDisplay(item.status) }}
                 </span>
               </td>
               <td>
                 <button 
                   class="btn-admin-outline-primary btn-sm" 
                   @click="openAuditModal(item)"
-                  :disabled="item.status === '已結案'"
+                  :disabled="item.status === 'APPROVED'"
                 >
                   <i class="bi bi-file-earmark-check me-1"></i>
                   審核
@@ -88,7 +102,7 @@
               </td>
             </tr>
             <tr v-if="paginatedData.length === 0">
-              <td colspan="6" class="text-center py-5 text-muted">
+              <td colspan="7" class="text-center py-5 text-muted">
                 沒有找到符合狀態的申請資料
               </td>
             </tr>
@@ -141,58 +155,156 @@
         </nav>
       </div>
     </div>
+
+    <!-- Review Modal -->
+    <div class="modal fade" :class="{ 'show d-block': showReviewModal }" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="reviewModalLabel">審核申請 #{{ selectedRegistration?.id }}</h5>
+            <button type="button" class="btn-close" @click="closeReviewModal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-start">
+              <div class="mb-3 p-3 bg-light rounded">
+                <h6 class="fw-bold mb-2 border-bottom pb-2">申請人資料</h6>
+                <p class="mb-1"><strong>姓名:</strong> {{ selectedRegistration?.name }}</p>
+                <p class="mb-1"><strong>電話:</strong> {{ selectedRegistration?.phone }}</p>
+                <p class="mb-0"><strong>地址:</strong> {{ selectedRegistration?.address }}</p>
+                <p v-if="selectedRegistration?.storeName" class="mb-0 mt-1"><strong>商家名稱:</strong> {{ selectedRegistration?.storeName }}</p>
+              </div>
+              <div class="mb-3">
+                <label for="audit-opinion" class="form-label fw-bold">審核意見</label>
+                <textarea id="audit-opinion" class="form-control" rows="3" placeholder="請輸入審核意見 (退回時必填)" v-model="reviewOpinion"></textarea>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeReviewModal">取消</button>
+            <button type="button" class="btn btn-danger" @click="reviewAction = 'reject'; submitReview()">退回申請</button>
+            <button type="button" class="btn btn-success" @click="reviewAction = 'approve'; submitReview()">同意申請</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showReviewModal" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import axios from 'axios';
+import { ref, onMounted, computed, watch } from 'vue';
 import Swal from 'sweetalert2';
-import storeRegistrationData from '@/data/storeRegistrationData.json';
+import { storeRegistrationAPI } from '@/api/storeRegistration';
 
-const registrations = ref(storeRegistrationData);
-const currentPage = ref(1);
-const pageSize = 10;
-const currentTab = ref('All');
-
-const setTab = (tab) => {
-  currentTab.value = tab;
-  currentPage.value = 1; // Reset to first page when switching tabs
+// 狀態對應 (Backend Enum -> Frontend Tab Value)
+const STATUS_MAP = {
+    'pending': 'PENDING',
+    'approved': 'APPROVED',
+    'returned': 'RETURNED'
 };
 
-// Computed: Filter logic
-const filteredData = computed(() => {
-  if (currentTab.value === 'All') {
-    return registrations.value;
-  }
-  return registrations.value.filter(item => item.status === currentTab.value);
+const activeTab = ref('pending'); // pending, approved, returned
+const filterType = ref(''); // '', 'true', 'false'
+const registrations = ref([]);
+const loading = ref(false);
+const currentPage = ref(0); // 0-indexed
+const pageSize = ref(10);
+const totalPages = ref(0);
+const totalItems = ref(0); // Added for pagination info
+
+// Modal related
+const showReviewModal = ref(false);
+const selectedRegistration = ref(null);
+const reviewAction = ref('approve'); // approve, reject
+const reviewOpinion = ref('');
+
+const fetchRegistrations = async () => {
+    loading.value = true;
+    try {
+        const status = STATUS_MAP[activeTab.value];
+        const params = {
+            page: currentPage.value, // API is 0-indexed
+            size: pageSize.value
+        };
+        
+        if (status) {
+            params.status = status;
+        }
+        if (filterType.value !== '') {
+            params.isUpdate = filterType.value === 'true';
+        }
+        
+        const response = await storeRegistrationAPI.getAllApplications(params);
+        
+        // Ensure we handle Page<T> format
+        registrations.value = response.data?.content || response.content || [];
+        totalPages.value = response.data?.totalPages || response.totalPages || 0;
+        totalItems.value = response.data?.totalElements || response.totalElements || 0;
+        
+    } catch (error) {
+        console.error('Fetch error:', error);
+        Swal.fire('錯誤', '無法載入申請資料', 'error');
+    } finally {
+        loading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchRegistrations();
 });
 
-// Computed: Pagination logic
-const totalItems = computed(() => filteredData.value.length);
-const totalPages = computed(() => Math.ceil(totalItems.value / pageSize));
-const startIndex = computed(() => (currentPage.value - 1) * pageSize);
-const endIndex = computed(() => startIndex.value + pageSize);
+watch(activeTab, () => {
+    currentPage.value = 0; // Reset to first page on tab change
+    fetchRegistrations();
+});
 
-const paginatedData = computed(() => {
-  return filteredData.value.slice(startIndex.value, endIndex.value);
+watch(filterType, () => {
+    currentPage.value = 0; // Reset to first page on filter change
+    fetchRegistrations();
 });
 
 // Helper for status badge class
 const getStatusClass = (status) => {
   switch (status) {
-    case '已結案':
+    case 'APPROVED':
         return 'status-active'; // Green
-    case '退回中':
+    case 'RETURNED':
         return 'status-banned'; // Red
-    case '未處理':
+    case 'PENDING':
         return 'status-pending'; // Amber
     default:
         return 'status-user'; // Gray
   }
 };
 
-// Simple page range for pagination
+// Map backend status to display text
+const getStatusDisplay = (status) => {
+    switch (status) {
+        case 'APPROVED': return '已結案';
+        case 'RETURNED': return '退回中';
+        case 'PENDING': return '未處理';
+        default: return status;
+    }
+};
+
+// Formatting Date
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Pagination computed properties
+const startIndex = computed(() => currentPage.value * pageSize.value);
+const endIndex = computed(() => startIndex.value + (registrations.value ? registrations.value.length : 0));
+const paginatedData = computed(() => registrations.value || []);
+
 const visiblePages = computed(() => {
   const pages = [];
   const maxVisible = 5;
@@ -212,27 +324,22 @@ const visiblePages = computed(() => {
 const changePage = (page) => {
   if (page >= 1 && page <= totalPages.value) {
     currentPage.value = page;
+    fetchRegistrations();
   }
 };
 
 // Audit Logic
 const openAuditModal = async (item) => {
-  // Mock Data for demonstration since current JSON doesn't have these fields
-  const mockData = {
-    ownerName: item.name,
-    storePhone: '0912-345-678', // Placeholder
-    storeAddress: '台北市大安區復興南路一段390號' // Placeholder
-  };
-
   const { value: result } = await Swal.fire({
     title: `審核申請 #${item.id}`,
     html: `
       <div class="text-start">
         <div class="mb-3 p-3 bg-light rounded">
           <h6 class="fw-bold mb-2 border-bottom pb-2">申請人資料</h6>
-          <p class="mb-1"><strong>姓名:</strong> ${mockData.ownerName}</p>
-          <p class="mb-1"><strong>電話:</strong> ${mockData.storePhone}</p>
-          <p class="mb-0"><strong>地址:</strong> ${mockData.storeAddress}</p>
+          <p class="mb-1"><strong>姓名:</strong> ${item.name}</p>
+          <p class="mb-1"><strong>電話:</strong> ${item.phone}</p>
+          <p class="mb-0"><strong>地址:</strong> ${item.address}</p>
+          ${item.storeName ? `<p class="mb-0 mt-1"><strong>商家名稱:</strong> ${item.storeName}</p>` : ''}
         </div>
         <div class="mb-3">
           <label class="form-label fw-bold">審核意見</label>
@@ -249,41 +356,45 @@ const openAuditModal = async (item) => {
     denyButtonColor: '#ef4444', // Red
     width: '600px',
     preConfirm: () => {
+      const container = Swal.getHtmlContainer();
       return {
         action: 'approve',
-        opinion: document.getElementById('audit-opinion').value
+        opinion: container.querySelector('#audit-opinion').value,
+        lastUpdatedAt: item.updatedAt
       };
     },
     preDeny: () => {
-      const opinion = document.getElementById('audit-opinion').value;
-      if (!opinion.trim()) {
+      const container = Swal.getHtmlContainer();
+      const opinion = container.querySelector('#audit-opinion').value;
+      if (!opinion || !opinion.trim()) {
         Swal.showValidationMessage('退回申請時必須填寫審核意見');
         return false;
       }
       return {
-        action: 'return',
-        opinion: opinion
+        action: 'reject', // Changed to match Backend API expectation
+        opinion: opinion.trim(),
+        lastUpdatedAt: item.updatedAt
       };
     }
   });
 
   if (result) {
     if (result.action === 'approve') {
-       handleApprove(item, mockData, result.opinion);
-    } else if (result.action === 'return') {
-       handleReturn(item, result.opinion);
+       handleApprove(item, result.opinion, result.lastUpdatedAt);
+    } else if (result.action === 'reject') {
+       handleReturn(item, result.opinion, result.lastUpdatedAt);
     }
   }
 };
 
-const handleApprove = async (item, data, opinion) => {
+const handleApprove = async (item, opinion, lastUpdatedAt) => {
   const confirmResult = await Swal.fire({
     title: '確認要同意這筆申請?',
     html: `
       <div class="text-start bg-light p-3 rounded small">
-        <p class="mb-1"><strong>姓名:</strong> ${data.ownerName}</p>
-        <p class="mb-1"><strong>電話:</strong> ${data.storePhone}</p>
-        <p class="mb-0"><strong>地址:</strong> ${data.storeAddress}</p>
+        <p class="mb-1"><strong>姓名:</strong> ${item.name}</p>
+        <p class="mb-1"><strong>電話:</strong> ${item.phone}</p>
+        <p class="mb-0"><strong>地址:</strong> ${item.address}</p>
       </div>
       <p class="mt-3 text-muted small">此操作將把案件狀態改為「已結案」</p>
     `,
@@ -296,32 +407,23 @@ const handleApprove = async (item, data, opinion) => {
 
   if (confirmResult.isConfirmed) {
     try {
-      // Mock API call
-      // await axios.post('/admin/store-registration/approve', { id: item.id, opinion });
+      await storeRegistrationAPI.reviewApplication(item.id, {
+          action: 'approve',
+          opinion: opinion,
+          lastUpdatedAt: lastUpdatedAt
+      });
       
-      // Update local state
-      const index = registrations.value.findIndex(r => r.id === item.id);
-      if (index !== -1) {
-        registrations.value[index].status = '已結案';
-      }
-
       Swal.fire('已結案', '申請已成功同意', 'success');
-      
-      // Convert to JSON for backend handover (Simulated)
-      console.log('Backend Payload:', JSON.stringify({
-        id: item.id,
-        status: '已結案',
-        opinion: opinion,
-        reviewedAt: new Date().toISOString()
-      }, null, 2));
+      fetchRegistrations(); // Reload data
 
     } catch (error) {
-      Swal.fire('錯誤', '更新失敗', 'error');
+      console.error(error);
+      Swal.fire('錯誤', '更新失敗: ' + (error.response?.data?.error || error.message), 'error');
     }
   }
 };
 
-const handleReturn = async (item, opinion) => {
+const handleReturn = async (item, opinion, lastUpdatedAt) => {
   const confirmResult = await Swal.fire({
     title: '確認要退回這筆申請?',
     html: `
@@ -342,27 +444,18 @@ const handleReturn = async (item, opinion) => {
 
   if (confirmResult.isConfirmed) {
     try {
-      // Mock API call
-      // await axios.post('/admin/store-registration/return', { id: item.id, opinion });
-      
-      // Update local state
-      const index = registrations.value.findIndex(r => r.id === item.id);
-      if (index !== -1) {
-        registrations.value[index].status = '退回中';
-      }
+      await storeRegistrationAPI.reviewApplication(item.id, {
+          action: 'reject',
+          opinion: opinion,
+          lastUpdatedAt: lastUpdatedAt
+      });
 
       Swal.fire('已退回', '申請已退回給使用者', 'success');
-
-      // Convert to JSON for backend handover (Simulated)
-      console.log('Backend Payload:', JSON.stringify({
-        id: item.id,
-        status: '退回中',
-        opinion: opinion,
-        reviewedAt: new Date().toISOString()
-      }, null, 2));
+      fetchRegistrations(); // Reload data
 
     } catch (error) {
-      Swal.fire('錯誤', '更新失敗', 'error');
+       console.error(error);
+      Swal.fire('錯誤', '更新失敗: ' + (error.response?.data?.error || error.message), 'error');
     }
   }
 };
