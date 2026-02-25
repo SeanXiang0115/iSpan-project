@@ -1,10 +1,10 @@
 package com.example.demo.config;
 
-import com.example.demo.security.JwtAuthenticationFilter;
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -22,8 +22,9 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.List;
+import com.example.demo.security.JwtAuthenticationFilter;
+
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -68,6 +69,8 @@ public class SecurityConfig {
                         // 允許訪問管理員端點（暫時開放，後續可改為需要 ADMIN 權限）
                         .requestMatchers("/api/admins/**").permitAll()
                         // OAuth2 登入端點
+                        .requestMatchers("/api/products/**").permitAll()
+                        //放行電商商品相關API
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         // 地圖搜尋端點：允許匿名存取（搜尋不需要登入）
                         .requestMatchers("/api/map/**").permitAll()
@@ -96,6 +99,7 @@ public class SecurityConfig {
                 .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
