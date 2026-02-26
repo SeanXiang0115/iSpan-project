@@ -35,6 +35,11 @@ const dayNameToNum = {
 };
 const numToDayName = Object.fromEntries(Object.entries(dayNameToNum).map(([k, v]) => [v, k]));
 
+const daysMap = {
+  Monday: '星期一', Tuesday: '星期二', Wednesday: '星期三',
+  Thursday: '星期四', Friday: '星期五', Saturday: '星期六', Sunday: '星期日'
+};
+
 const fetchSettings = async () => {
   try {
     const res = await storeAPI.getReservationSettings();
@@ -81,6 +86,19 @@ onMounted(() => {
 
 const saveSettings = async () => {
   try {
+    // 1. 營業時間驗證：防止跨日或無效時段
+    const invalidHours = businessHours.value.filter(bh => bh.active && bh.close <= bh.open);
+    if (invalidHours.length > 0) {
+      const dayNames = invalidHours.map(bh => daysMap[bh.day] || bh.day).join('、');
+      await Swal.fire({
+        icon: 'error',
+        title: '營業時間設定錯誤',
+        text: `以下日期的結束時間必須晚於開始時間：${dayNames}`,
+        confirmButtonColor: '#9f9572'
+      });
+      return;
+    }
+
     const payload = {
       timeSlot: bookingConfig.value.interval,
       timeLimit: bookingConfig.value.duration,

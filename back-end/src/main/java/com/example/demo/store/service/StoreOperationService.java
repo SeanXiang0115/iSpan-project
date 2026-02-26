@@ -86,12 +86,19 @@ public class StoreOperationService extends StoreBaseService {
 
         if (dto.getOpenHours() != null) {
             List<OpenHour> newOpenHours = dto.getOpenHours().stream().map(hDto -> {
+                LocalTime open = LocalTime.parse(hDto.getOpenTime());
+                LocalTime close = LocalTime.parse(hDto.getCloseTime());
+
+                // 阻擋跨日營業時間
+                if (!close.isAfter(open)) {
+                    throw new IllegalArgumentException("營業時間設定錯誤：結束時間必須晚於開始時間（星期 " + hDto.getDayOfWeek() + "）");
+                }
+
                 OpenHour oh = new OpenHour();
                 oh.setStore(store);
                 oh.setDayOfWeek(hDto.getDayOfWeek());
-                // 假設前端傳來的是 String "11:00"，需轉換為 LocalTime
-                oh.setOpenTime(LocalTime.parse(hDto.getOpenTime()));
-                oh.setCloseTime(LocalTime.parse(hDto.getCloseTime()));
+                oh.setOpenTime(open);
+                oh.setCloseTime(close);
                 return oh;
             }).toList();
             openHourRepository.saveAll(newOpenHours);
