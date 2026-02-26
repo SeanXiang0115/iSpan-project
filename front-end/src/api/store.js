@@ -9,6 +9,13 @@ export const storeAPI = {
     },
 
     /**
+     * 根據 ID 獲取店家資訊
+     */
+    getStoreInfoById(id) {
+        return api.get(`/owner/store/${id}`);
+    },
+
+    /**
      * 更新當前店家的資訊
      * @param {Object|FormData} data - 店家資訊物件或 FormData (包含圖片)
      */
