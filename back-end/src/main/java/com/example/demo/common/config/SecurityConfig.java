@@ -75,10 +75,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/store-registrations/**").permitAll()
                         // OAuth2 登入端點
                         .requestMatchers("/api/products/**").permitAll()
-                        //放行電商商品相關API
+                        // 放行電商商品相關API
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         // 地圖搜尋端點：允許匿名存取（搜尋不需要登入）
                         .requestMatchers("/api/map/**").permitAll()
+                        // --- 新增：放行客訴表單 API ---
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/feedback/**").permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,
