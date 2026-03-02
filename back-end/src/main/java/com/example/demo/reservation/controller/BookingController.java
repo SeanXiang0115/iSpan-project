@@ -1,0 +1,43 @@
+package com.example.demo.reservation.controller;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.demo.reservation.dto.BookingRequestDto;
+import com.example.demo.reservation.dto.BookingResponseDto;
+import com.example.demo.reservation.dto.SlotAvailDto;
+import com.example.demo.reservation.service.BookingService;
+
+import lombok.RequiredArgsConstructor;
+
+@RestController
+@RequestMapping("/api/bookings")
+@RequiredArgsConstructor
+public class BookingController {
+
+    private final BookingService bookingService;
+
+    @GetMapping("/available-slots")
+    public ResponseEntity<List<SlotAvailDto>> getSlots(
+            @RequestParam Integer storeId,
+            @RequestParam LocalDate date,
+            @RequestParam Integer seatType) {
+
+        List<SlotAvailDto> response = bookingService.getAvailableSlots(storeId, date, seatType);
+        return ResponseEntity.ok(response); // 回傳狀態 200 並帶上資料
+    }
+
+    @PostMapping
+    public ResponseEntity<BookingResponseDto> createBooking(@RequestBody BookingRequestDto dto) {
+        BookingResponseDto response = bookingService.createBooking(dto);
+        return ResponseEntity.ok(response);
+    }
+}

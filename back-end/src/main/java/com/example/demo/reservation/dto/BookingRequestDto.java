@@ -7,7 +7,7 @@ import lombok.Data;
 
 @Data
 public class BookingRequestDto {
-    private Integer userId; // 預約人的 ID
+    private Long userId; // 預約人的 ID
     private Integer storeId; // 店家的 ID
     private Integer reservedSeatType;
     private Integer guestCount;
