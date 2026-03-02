@@ -35,6 +35,7 @@ public class FeedbackService {
         feedback.setName(dto.getName());
         feedback.setPhone(dto.getPhone());
         feedback.setContents(dto.getContents());
+        feedback.setCaseNumber(dto.getCaseNumber());
 
         // 處理關聯 (關鍵修正)
         // 處理 Type (從 DTO 拿到的 typeId)

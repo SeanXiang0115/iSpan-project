@@ -23,5 +23,5 @@ public class FeedbackResponseDto {
 
     private String repliedAt;
 
-    private Long adminId;
+    private Integer adminId;
 }

@@ -38,7 +38,7 @@ public class MailService {
                     "          <tr>" +
                     "            <td align='center' style='padding: 40px 0 20px 0; background-color: " + "#9f9572"
                     + ";'>" +
-                    "              <img src='https://github.com/merris3557/iSpan-project/blob/eab23152d018d5a1b969fad28277df7dbc17ccac/front-end/src/pictures/TL_Logo_forMail.png?raw=true' alt='饗島 Logo' width='120' style='display: block; '>"
+                    "              <img src='https://github.com/merris3557/iSpan-project/blob/47c4ceb5de5d816e6f0e62f2f791da15e52de7b7/front-end/src/pictures/TL_Logo_forMail.png' alt='饗島 Logo' width='120' style='display: block; '>"
                     + // filter: brightness(0) invert(1); 假設 Logo 是深色，這裡濾鏡轉白色
                     "            </td>" +
                     "          </tr>" +

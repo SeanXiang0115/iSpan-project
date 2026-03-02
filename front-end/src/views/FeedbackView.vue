@@ -125,7 +125,7 @@
           <div class="form-group">
             <label for="feedbackContent" class="form-label required">
               <i class="bi bi-chat-left-text"></i>
-              回饋內容
+              反映內容
             </label>
             <textarea
               id="feedbackContent"
@@ -302,7 +302,21 @@ export default {
         // Generate report number
         const timestamp = Date.now();
         const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-        reportNumber.value = `FB${timestamp.toString().slice(-6)}${random}`;
+        const generatedNumber = `FB${timestamp.toString().slice(-6)}${random}`;
+        reportNumber.value = generatedNumber;
+        
+        // // 1. 取得年月日 (YYYYMMDD)
+        //   const now = new Date();
+        //   const year = now.getFullYear();
+        //   const month = String(now.getMonth() + 1).padStart(2, '0');
+        //   const day = String(now.getDate()).padStart(2, '0');
+
+        // // 2. 假設你的流水號變數是 sequenceNumber (需確保它是數字或字串)
+        // // 使用 padStart 確保流水號一定是 4 位數，不足則補 0
+        //   const serial = String(sequenceNumber).padStart(4, '0');
+
+        // // 3. 組合最終編碼
+        // reportNumber.value = `TL${year}${month}${day}${serial}`;
 
         // Map Issue Type
         const issueTypeMap = {
@@ -315,6 +329,7 @@ export default {
         };
 
         const payload = {
+          caseNumber: generatedNumber,
           name: formData.value.contactName,
           phone: formData.value.contactPhone,
           email: formData.value.email,
