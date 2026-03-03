@@ -4,157 +4,168 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 // 定義router
 const routes = [
+  // ===== 前台路由：有 Navbar + Footer (via default.vue layout) =====
   {
     path: '/',
-    name: 'Home',
-    component: () => import('@/views/HomeView.vue'),
+    component: () => import('@/layouts/default.vue'),
+    children: [
+      {
+        path: '',
+        name: 'Home',
+        component: () => import('@/views/HomeView.vue'),
+      },
+      {
+        path: 'login',
+        name: 'Login',
+        component: () => import('@/views/LoginView.vue'),
+      },
+      {
+        path: 'userInfo',
+        name: 'UserInfo',
+        component: () => import('@/views/UserInfoView.vue'),
+        meta: { requiresAuth: true },
+        redirect: '/userInfo/profile',
+        children: [
+          {
+            path: 'profile',
+            name: 'UserProfile',
+            component: () => import('@/views/UserInfoContent.vue'),
+            props: { title: '個人資料' }
+          },
+          {
+            path: 'bookings',
+            name: 'UserBookingsTab',
+            component: () => import('@/views/UserInfoContent.vue'),
+            props: { title: '我的訂位' }
+          },
+          {
+            path: 'orders',
+            name: 'UserOrders',
+            component: () => import('@/views/UserInfoContent.vue'),
+            props: { title: '我的訂單' }
+          },
+          {
+            path: 'store-registration',
+            name: 'UserInfoStoreReg',
+            component: () => import('@/views/UserInfoStoreReg.vue')
+          }
+        ]
+      },
+      {
+        path: 'storeRegistration',
+        name: 'StoreRegistration',
+        component: () => import('@/views/StoreRegistrationView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'shopStore',
+        component: () => import('@/views/shopStore.vue'),
+        name: 'ShopStore'
+      },
+      {
+        path: 'Cart',
+        component: () => import('@/views/shopCart.vue'),
+        name: 'ShopCart'
+      },
+      {
+        path: 'storeInfo/:id?',
+        name: 'StoreInfo',
+        component: () => import('@/views/StoreInfoView.vue'),
+      },
+      {
+        path: 'storeInfo/reservation',
+        name: 'Reservation',
+        component: () => import('@/views/ReservationView.vue'),
+      },
+      {
+        path: 'user/bookings',
+        name: 'UserBookings',
+        component: () => import('@/views/UserBookingsView.vue')
+      },
+      {
+        path: 'owner/storeInfo',
+        name: 'OwnerStoreInfo',
+        component: () => import('@/views/OwnerProfileView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'owner/bookings/seats',
+        name: 'Seats',
+        component: () => import('@/views/SeatsAndTimeView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'owner/bookings/data',
+        name: 'Data',
+        component: () => import('@/views/BookingDataView.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: 'about',
+        component: () => import('@/views/AboutView.vue'),
+        name: 'About'
+      },
+      {
+        path: 'mapSearch',
+        component: () => import('@/views/MapSearchView.vue'),
+        name: 'MapSearch'
+      },
+      {
+        path: 'feedback',
+        component: () => import('@/views/FeedbackView.vue'),
+        name: 'Feedback'
+      },
+      {
+        path: 'feedbackAP',
+        component: () => import('@/views/FeedbackAPView.vue'),
+        name: 'FeedbackAP'
+      },
+      {
+        path: 'productsDetail/:id',
+        component: () => import('@/views/productsDetail.vue'),
+        name: 'productsDetail',
+      },
+      {
+        path: 'checkOut',
+        component: () => import('@/views/checkOut.vue'),
+        name: 'checkOut',
+      },
+      {
+        path: 'getusertest',
+        name: 'GetUserTest',
+        component: () => import('@/views/GetUserTestView.vue')
+      },
+      {
+        path: 'test',
+        name: 'Test',
+        component: () => import('@/views/TestView.vue')
+      },
+    ]
   },
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('@/views/LoginView.vue'),
-  },
+
+  // ===== Blank Layout 路由：無 Navbar / Footer =====
   {
     path: '/forgot-password',
     name: 'ForgetPassword',
     component: () => import('@/views/ForgetPasswordView.vue'),
-    meta: { layout: 'blank' }
   },
   {
     path: '/reset-password',
     name: 'ResetPassword',
     component: () => import('@/views/ResetPasswordView.vue'),
-    meta: { layout: 'blank' }
-  },
-  {
-    path: '/userInfo',
-    name: 'UserInfo',
-    component: () => import('@/views/UserInfoView.vue'),
-    meta: { requiresAuth: true },
-    redirect: '/userInfo/profile', // Default redirect
-    children: [
-      {
-        path: 'profile',
-        name: 'UserProfile',
-        component: () => import('@/views/UserInfoContent.vue'),
-        props: { title: '個人資料' }
-      },
-      {
-        path: 'bookings',
-        name: 'UserBookingsTab',
-        component: () => import('@/views/UserInfoContent.vue'),
-        props: { title: '我的訂位' }
-      },
-      {
-        path: 'orders',
-        name: 'UserOrders',
-        component: () => import('@/views/UserInfoContent.vue'),
-        props: { title: '我的訂單' }
-      },
-      {
-        path: 'store-registration', // Child path
-        name: 'UserInfoStoreReg',
-        component: () => import('@/views/UserInfoStoreReg.vue')
-      }
-    ]
-  },
-  {
-    path: '/storeRegistration',
-    name: 'StoreRegistration',
-    component: () => import('@/views/StoreRegistrationView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/shopStore',
-    component: () => import('@/views/shopStore.vue'),
-    name: 'ShopStore'
-  },
-  {
-    path: '/Cart',
-    component: () => import('@/views/shopCart.vue'),
-    name: 'ShopCart'
-  },
-  {
-    path: '/storeInfo/:id?',
-    name: 'StoreInfo',
-    component: () => import('@/views/StoreInfoView.vue'),
-  },
-  {
-    path: '/storeInfo/reservation',
-    name: 'Reservation',
-    component: () => import('@/views/ReservationView.vue'),
-  },
-  {
-    path: '/user/bookings',
-    name: 'UserBookings',
-    component: () => import('@/views/UserBookingsView.vue')
-  },
-  {
-    path: '/owner/storeInfo',
-    name: 'OwnerStoreInfo',
-    component: () => import('@/views/OwnerProfileView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/owner/bookings/seats',
-    name: 'Seats',
-    component: () => import('@/views/SeatsAndTimeView.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/owner/bookings/data',
-    name: 'Data',
-    component: () => import('@/views/BookingDataView.vue'),
-    meta: { requiresAuth: true }
-  },
-  // {
-  //   path: '/home',
-  //   component: () => import('@/views/HomeView.vue'),
-  //   name: 'Home'
-  // },
-  {
-    path: '/about',
-    component: () => import('@/views/AboutView.vue'),
-    name: 'About'
-  },
-  {
-    path: '/mapSearch',
-    component: () => import('@/views/MapSearchView.vue'),
-    name: 'MapSearch'
-  },
-  {
-    path: '/feedback',
-    component: () => import('@/views/FeedbackView.vue'),
-    name: 'Feedback'
-  },
-  {
-    path: '/feedbackAP',
-    component: () => import('@/views/FeedbackAPView.vue'),
-    name: 'FeedbackAP'
   },
   {
     path: '/oauth2/redirect',
     name: 'OAuth2Redirect',
     component: () => import('@/views/OAuth2RedirectHandler.vue'),
-    meta: { layout: 'blank' }
   },
   {
     path: '/register',
     component: () => import('@/views/RegisterView.vue'),
     name: 'Register',
-    meta: { layout: 'blank' }
   },
-  {
-    path: '/productsDetail/:id',
-    component: () => import('@/views/productsDetail.vue'),
-    name: 'productsDetail',
-  },
-  {
-    path: '/checkOut',
-    component: () => import('@/views/checkOut.vue'),
-    name: 'checkOut',
-  },
-  // Admin Routes
+
+  // ===== Admin 路由：使用 admin.vue layout，無 Navbar / Footer =====
   {
     path: '/admin',
     component: () => import('@/layouts/admin.vue'),
@@ -168,57 +179,57 @@ const routes = [
       {
         path: 'frontend/banners',
         name: 'AdminFrontendBanners',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'frontend/content',
         name: 'AdminFrontendContent',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'news/list',
         name: 'AdminNewsList',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'news/create',
         name: 'AdminNewsCreate',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'knowledge/list',
         name: 'AdminKnowledgeList',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'knowledge/categories',
         name: 'AdminKnowledgeCategories',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'products/list',
         name: 'AdminProductsList',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'products/create',
         name: 'AdminProductsCreate',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'products/categories',
         name: 'AdminProductsCategories',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'sales/orders',
         name: 'AdminSalesOrders',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'sales/reports',
         name: 'AdminSalesReports',
-        component: () => import('@/views/AdminDashboard.vue') // placeholder
+        component: () => import('@/views/AdminDashboard.vue')
       },
       {
         path: 'users/list',
@@ -229,8 +240,7 @@ const routes = [
         path: 'users/storeRegistration',
         name: 'StoreRegistrationCheck',
         component: () => import('@/views/StoreRegistrationCheckView.vue')
-      }
-      ,
+      },
       {
         path: 'backEnd/productsList',
         name: 'BackEndProductsList',
@@ -240,16 +250,16 @@ const routes = [
         path: 'backEnd/productsOrders',
         name: 'BackEndproductsOrders',
         component: () => import('@/views/BackEndproductsOrders.vue')
-      }, {
-        path: '/feedbackAP',
+      },
+      {
+        path: 'feedbackAP',
         name: 'FeedbackAP',
-        component: () => import('@/views/FeedbackAPView.vue') // placeholder
+        component: () => import('@/views/FeedbackAPView.vue')
       },
       {
         path: 'admins/list',
         name: 'AdminsList',
-        component: () => import('@/views/AdminListView.vue'), // placeholder
-        // TODO: 測試完成後，移除此行恢復強制登入檢查
+        component: () => import('@/views/AdminListView.vue'),
         meta: { requiresAdminAuth: false }
       }
     ]
@@ -258,30 +268,17 @@ const routes = [
     path: '/admin/login',
     name: 'AdminLogin',
     component: () => import('@/views/AdminLoginView.vue'),
-    meta: { layout: 'blank' }
   },
   {
     path: '/admin/forgot-password',
     name: 'AdminForgetPassword',
     component: () => import('@/views/AdminForgetPasswordView.vue'),
-    meta: { layout: 'blank' }
   },
   {
     path: '/admin/reset-password',
     name: 'AdminResetPassword',
     component: () => import('@/views/AdminResetPasswordView.vue'),
-    meta: { layout: 'blank' }
   },
-  {
-    path: '/getusertest',
-    name: 'GetUserTest',
-    component: () => import('@/views/GetUserTestView.vue')
-  },
-  {
-    path: '/test',
-    name: 'Test',
-    component: () => import('@/views/TestView.vue')
-  }
 
 ];
 
