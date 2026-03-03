@@ -140,22 +140,21 @@ public class BookingService {
             endTime = startTime.plusMinutes(store.getTimeLimit());
         }
 
-        // 3. 檢查座位的可用性
-        // 獲取該店該桌型的總桌數
-        SeatId seatId = new SeatId(store.getStoreId(), dto.getReservedSeatType());
-        Seat seatConfig = seatRepository.findById(seatId)
+        // 3.悲觀鎖
+        // 獲取該店該桌型的設定，並在此處「鎖定」該資源
+        SeatId seatId = new SeatId(dto.getStoreId(), dto.getReservedSeatType());
+        Seat seatConfig = seatRepository.findByIdForUpdate(seatId) // 改用悲觀鎖
                 .orElseThrow(() -> new RuntimeException("該店家未設定此類別的座位"));
-        Integer totalTables = seatConfig.getTotalCount();
 
-        // 檢查時間重疊的已訂位數量
+        // 在有鎖的情況下進行人數檢查與重疊查詢
+        // 因為此處有鎖，其他執行緒如果也要訂「同店、同桌型」，會在此等待，直到本事務完成
+        int totalTables = seatConfig.getTotalCount();
+
         long currentBookings = bookingRepository.countOverlappingBookings(
-                store.getStoreId(), // id為該店家
-                dto.getBookingDate(), // 前台傳入的日期
-                dto.getReservedSeatType(), // 前台傳入的座位類別
-                startTime,
-                endTime);
+                dto.getStoreId(), dto.getBookingDate(), dto.getReservedSeatType(),
+                startTime, endTime);
 
-        // 在建立訂位前先檢查是否已滿額
+        // 如果已經滿了，直接丟出例外，讓使用者知道該時段已滿
         if (currentBookings >= totalTables) {
             throw new RuntimeException("該時段此類別座位已滿");
         }

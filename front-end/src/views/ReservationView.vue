@@ -38,7 +38,10 @@ const isNoVacant = computed(() => {
 // 座位類型的取得方式
 const availableTableTypes = computed(() => {
     if (!storeConfig.value || !storeConfig.value.seatSettings) return [];
-    return storeConfig.value.seatSettings.map(s => s.seatType);
+    // 過濾掉總數為 0 的桌型，讓該按鈕直接不顯示
+    return storeConfig.value.seatSettings
+        .filter(s => s.totalCount > 0)
+        .map(s => s.seatType);
 });
 
 // 日期限制邏輯
@@ -85,7 +88,10 @@ const fetchSlots = async () => {
 const resetTime = () => { bookingForm.value.startTime = ''; };
 const handleBooking = async () => {
     if (!bookingForm.value.startTime) {
-        Swal.fire('請選擇時段', '', 'warning');
+        Swal.fire('請選擇座位、日期與時段', '', 'warning');
+        return;
+    } else if (!bookingForm.value.guestName || !bookingForm.value.guestPhone) {
+        Swal.fire('請填寫姓名與電話', '', 'warning');
         return;
     }
     // 調用寫好的 POST API
