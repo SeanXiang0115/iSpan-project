@@ -107,7 +107,7 @@ public class BookingService {
             LocalTime slotEnd = currentTime.plusMinutes(timeLimit);
 
             // 2. 調用下方createBooking()方法裡面的 countOverlappingBookings() repository 方法
-            long occupied = bookingRepository.countOverlappingBookings(
+            long occupied = bookingRepository.countConflicts(
                     storeId, date, seatType, currentTime, slotEnd);
 
             // 3. 判斷是否為過去時間
@@ -134,14 +134,19 @@ public class BookingService {
         StoresInfo store = storeInfoRepository.findById(dto.getStoreId())
                 .orElseThrow(() -> new RuntimeException("找不到該店家"));
 
-        // 2. 處理結束時間 (如果 Dto 沒傳，則根據店家 timeLimit 計算)
+        // 2. 日期檢核：不得預約當天
+        if (!dto.getBookingDate().isAfter(LocalDate.now())) {
+            throw new RuntimeException("僅開放預約明日以後的時段");
+        }
+
+        // 3. 處理結束時間 (如果 Dto 沒傳，則根據店家 timeLimit 計算)
         LocalTime startTime = dto.getStartTime();
         LocalTime endTime = dto.getEndTime();
         if (endTime == null) {
             endTime = startTime.plusMinutes(store.getTimeLimit());
         }
 
-        // 3.悲觀鎖
+        // 4.悲觀鎖
         // 獲取該店該桌型的設定，並在此處「鎖定」該資源
         SeatId seatId = new SeatId(dto.getStoreId(), dto.getReservedSeatType());
         Seat seatConfig = seatRepository.findByIdForUpdate(seatId) // 改用悲觀鎖
@@ -151,7 +156,7 @@ public class BookingService {
         // 因為此處有鎖，其他執行緒如果也要訂「同店、同桌型」，會在此等待，直到本事務完成
         int totalTables = seatConfig.getTotalCount();
 
-        long currentBookings = bookingRepository.countOverlappingBookings(
+        long currentBookings = bookingRepository.countConflicts(
                 dto.getStoreId(), dto.getBookingDate(), dto.getReservedSeatType(),
                 startTime, endTime);
 
@@ -169,7 +174,7 @@ public class BookingService {
                     seatType, minGuests, maxGuests));
         }
 
-        // 4. 建立訂位實體並儲存
+        // 5. 建立訂位實體並儲存
         Booking booking = new Booking();
         booking.setUser(user);
         booking.setStore(store);
@@ -184,7 +189,7 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
 
-        // 5. 轉換回 Response Dto
+        // 6. 轉換回 Response Dto
         return convertToResponse(savedBooking);
     }
 
@@ -243,29 +248,65 @@ public class BookingService {
                 .toList();
     }
 
-    // 2. 店家更新訂位資訊（可修改日期與時間）
+    // 2. 店家更新訂位資訊（可修改日期與時間，包含完備檢核）
     @Transactional
     public BookingResponseDto updateBookingByShop(Integer bookingId, BookingUpdateDto dto) {
+        // 先獲取原本的訂位
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("找不到該訂位紀錄"));
-        // 更新日期
-        if (dto.getBookingDate() != null) {
-            booking.setBookingDate(dto.getBookingDate());
-        }
-        // 更新開始時間，並自動重算結束時間
-        if (dto.getStartTime() != null) {
-            booking.setStartTime(dto.getStartTime());
 
-            // 取得該店家的用餐限時 (timeLimit)
-            Integer timeLimit = booking.getStore().getTimeLimit();
-            // 重算結束時間：開始時間 + 用餐限時
-            booking.setEndTime(dto.getStartTime().plusMinutes(timeLimit));
+        // 準備新資料 (如果 Dto 沒傳則維持不變)
+        LocalDate newDate = dto.getBookingDate() != null ? dto.getBookingDate() : booking.getBookingDate();
+        LocalTime newStart = dto.getStartTime() != null ? dto.getStartTime() : booking.getStartTime();
+
+        // 如果日期或時間有變動，必須進行營業時間與重疊檢核
+        if (dto.getBookingDate() != null || dto.getStartTime() != null) {
+            // 0. 日期檢核：不得修改為當天
+            if (!newDate.isAfter(LocalDate.now())) {
+                throw new RuntimeException("不得將預約修改為今日或過去的日期");
+            }
+            StoresInfo store = booking.getStore();
+
+            // 1. 營業時間檢核
+            int dayOfWeek = newDate.getDayOfWeek().getValue();
+            int dbDayValue = (dayOfWeek == 7) ? 0 : dayOfWeek;
+            OpenHour openHour = openHourRepository.findByStore_StoreIdAndDayOfWeek(store.getStoreId(), dbDayValue)
+                    .orElseThrow(() -> new RuntimeException("該店家該日未營業"));
+
+            if (newStart.isBefore(openHour.getOpenTime()) || newStart.isAfter(openHour.getCloseTime())) {
+                throw new RuntimeException("所選時段非營業時間或已超過最後預約時間");
+            }
+
+            // 2. 容量與重疊檢核
+            // 鎖定該座位類型資源 (悲觀鎖)
+            SeatId seatId = new SeatId(store.getStoreId(), booking.getReservedSeatType());
+            Seat seatConfig = seatRepository.findByIdForUpdate(seatId)
+                    .orElseThrow(() -> new RuntimeException("找不到該桌型的座位設定"));
+
+            int totalTables = seatConfig.getTotalCount();
+            LocalTime newEnd = newStart.plusMinutes(store.getTimeLimit());
+
+            // 查詢重疊訂單 (排除自身，避免跟原本的自己衝突)
+            long occupied = bookingRepository.countConflictsExcept(
+                    store.getStoreId(), newDate, booking.getReservedSeatType(),
+                    newStart, newEnd, bookingId);
+
+            if (occupied >= totalTables) {
+                throw new RuntimeException("該時段此類別座位已滿");
+            }
+
+            // 通過檢核，執行更新
+            booking.setBookingDate(newDate);
+            booking.setStartTime(newStart);
+            booking.setEndTime(newEnd);
         }
-        // 如果店家也想順便改姓名電話（雖然 UI 目前分開，但 DTO 有支援就順便補上）
+
+        // 基本資料更新 (guestName, guestPhone)
         if (dto.getGuestName() != null)
             booking.setGuestName(dto.getGuestName());
         if (dto.getGuestPhone() != null)
             booking.setGuestPhone(dto.getGuestPhone());
+
         return convertToResponse(bookingRepository.save(booking));
     }
 }

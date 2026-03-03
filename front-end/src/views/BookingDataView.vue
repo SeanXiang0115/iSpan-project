@@ -112,7 +112,8 @@ const handleUpdate = async (updatedItem) => {
     });
   } catch (error) {
     console.error('更新訂位失敗:', error);
-    Swal.fire('錯誤', '更新失敗，請確認時間格式是否正確', 'error');
+    const msg = error.response?.data?.message || '更新失敗，請確認時間格式是否正確';
+    Swal.fire('錯誤', msg, 'error');
   }
 };
 
