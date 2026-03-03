@@ -42,8 +42,7 @@ const routes = [
       {
         path: 'bookings',
         name: 'UserBookingsTab',
-        component: () => import('@/views/UserInfoContent.vue'),
-        props: { title: '我的訂位' }
+        component: () => import('@/views/UserBookingsView.vue')
       },
       {
         path: 'orders',
@@ -83,11 +82,6 @@ const routes = [
     path: '/storeInfo/:id?',
     name: 'StoreInfo',
     component: () => import('@/views/StoreInfoView.vue'),
-  },
-  {
-    path: '/user/bookings',
-    name: 'UserBookings',
-    component: () => import('@/views/UserBookingsView.vue')
   },
   {
     path: '/owner/storeInfo',

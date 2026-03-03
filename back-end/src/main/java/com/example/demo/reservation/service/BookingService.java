@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.reservation.dto.BookingRequestDto;
 import com.example.demo.reservation.dto.BookingResponseDto;
+import com.example.demo.reservation.dto.BookingUpdateDto;
 import com.example.demo.reservation.dto.SlotAvailDto;
 import com.example.demo.reservation.entity.Booking;
 import com.example.demo.reservation.repository.BookingRepository;
@@ -202,5 +203,34 @@ public class BookingService {
         resp.setStatus(booking.getStatus());
         resp.setCreatedAt(booking.getCreatedAt());
         return resp;
+    }
+
+
+    // 取得使用者的訂位紀錄
+    // 1. 獲取使用者的所有訂位列表
+    public List<BookingResponseDto> getBookingsByUser(Long userId) {
+        return bookingRepository.findByUserId(userId).stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+    // 2. 更新訂位資訊（僅限姓名與電話）
+    @Transactional
+    public BookingResponseDto updateBooking(Integer bookingId, BookingUpdateDto dto) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("找不到該訂位紀錄"));
+        
+        booking.setGuestName(dto.getGuestName());
+        booking.setGuestPhone(dto.getGuestPhone());
+        
+        return convertToResponse(bookingRepository.save(booking));
+    }
+    // 3. 取消訂位（軟刪除，將狀態改為 false）
+    @Transactional
+    public void cancelBooking(Integer bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("找不到該訂位紀錄"));
+        
+        booking.setStatus(false);
+        bookingRepository.save(booking);
     }
 }

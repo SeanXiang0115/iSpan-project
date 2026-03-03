@@ -101,7 +101,7 @@ const handleBooking = async () => {
         }
     });
     await Swal.fire('訂位成功！', '', 'success');
-    router.push({ name: 'UserBookings' });
+    router.push({ name: 'UserBookingsTab' });
 };
 
 onMounted(fetchStoreConfig);
