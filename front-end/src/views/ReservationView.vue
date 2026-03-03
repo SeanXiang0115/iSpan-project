@@ -10,16 +10,38 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 const storeId = route.params.id;
-
-// 1. 統一變數名稱
 const storeConfig = ref(null);
-const availableTimeSlots = ref([]); // 建議統一用這個名字
-// 2. 修正計算屬性與輔助邏輯
+const availableTimeSlots = ref([]);
+
+// 人數增減邏輯
+const changeGuestCount = (delta) => {
+    const seatType = bookingForm.value.reservedSeatType;
+    if (!seatType) return; // 沒選桌型不給動
+    const min = Math.max(1, seatType - 1);
+    const max = seatType;
+    const nextValue = bookingForm.value.guestCount + delta;
+    if (nextValue >= min && nextValue <= max) {
+        bookingForm.value.guestCount = nextValue;
+    }
+};
+
+// 判斷是否選完條件後完全沒有可用時段
+const isNoVacant = computed(() => {
+    // 必須先選好日期與座位類型
+    if (!bookingForm.value.bookingDate || !bookingForm.value.reservedSeatType) return false;
+
+    // 如果時段列表示空的，或者所有時段的 available 都是 false，則代表無空位
+    return availableTimeSlots.value.length === 0 ||
+        availableTimeSlots.value.every(slot => !slot.available);
+});
+
+// 座位類型的取得方式
 const availableTableTypes = computed(() => {
     if (!storeConfig.value || !storeConfig.value.seatSettings) return [];
     return storeConfig.value.seatSettings.map(s => s.seatType);
 });
-// 3. 修正日期限制邏輯 (重新補上)
+
+// 日期限制邏輯
 const tomorrow = new Date();
 tomorrow.setDate(tomorrow.getDate() + 1);
 const minDate = tomorrow.toISOString().split('T')[0];
@@ -28,18 +50,20 @@ const maxDate = computed(() => {
     d.setMonth(d.getMonth() + 1);
     return d.toISOString().split('T')[0];
 });
-// 4. 修正 BookingForm 欄位
+
+// BookingForm 欄位
 const bookingForm = ref({
     userId: authStore.user?.id || null,
     storeId: storeId,
     reservedSeatType: null,
     bookingDate: '',
-    startTime: '', // 統一使用 startTime
-    guestCount: 1,      // 新增：預約人數
-    guestName: '',      // 新增：訪客姓名
-    guestPhone: ''      // 新增：訪客電話
+    startTime: '',
+    guestCount: '',
+    guestName: '',
+    guestPhone: ''
 });
-// 5. 修正 API 呼叫方法
+
+// API 呼叫方法
 const fetchStoreConfig = async () => {
     // 增加判斷：確保 ID 存在且不是字串 "undefined"
     if (!storeId || storeId === 'undefined') {
@@ -49,14 +73,15 @@ const fetchStoreConfig = async () => {
     const res = await axios.get(`/api/bookings/config/${storeId}`);
     storeConfig.value = res.data;
 };
-const fetchSlots = async () => { // 統一命名為 fetchSlots
+const fetchSlots = async () => {
     if (!bookingForm.value.bookingDate || !bookingForm.value.reservedSeatType) return;
     const res = await axios.get('/api/bookings/available-slots', {
         params: { storeId, date: bookingForm.value.bookingDate, seatType: bookingForm.value.reservedSeatType }
     });
     availableTimeSlots.value = res.data;
 };
-// 6. 補上重置與送出方法
+
+// 重置與送出方法
 const resetTime = () => { bookingForm.value.startTime = ''; };
 const handleBooking = async () => {
     if (!bookingForm.value.startTime) {
@@ -77,6 +102,12 @@ onMounted(fetchStoreConfig);
 watch([() => bookingForm.value.bookingDate, () => bookingForm.value.reservedSeatType], () => {
     resetTime();
     fetchSlots();
+
+    // 切換桌型時，自動將人數調整為該桌型的上限，避免出現人數超過桌型容量的情況 (x)
+    const seatType = bookingForm.value.reservedSeatType;
+    if (seatType) {
+        bookingForm.value.guestCount = seatType;
+    }
 });
 </script>
 
@@ -86,7 +117,9 @@ watch([() => bookingForm.value.bookingDate, () => bookingForm.value.reservedSeat
 
         <div class="bg-gdg-light p-4 border mb-4">
             <p class="mb-0 text-muted">
-                請選擇您的預約資訊。若該時段桌位已滿，按鈕將會隱藏。
+                請選擇您的預約桌型、日期與時段。若特定時段已滿，該選項將不予顯示。
+                <br>
+                如需進行大型聚會或超過人數上限之預約，請嘗試聯絡店家為您安排。
             </p>
         </div>
 
@@ -109,7 +142,7 @@ watch([() => bookingForm.value.bookingDate, () => bookingForm.value.reservedSeat
             </div>
 
             <div class="mb-4">
-                <label class="form-label d-block fw-bold mb-2">3. 選擇時段</label>
+                <label class="form-label d-block fw-bold mb-2">3. 選擇時段（請先選擇座位類型與日期）</label>
                 <div class="d-flex flex-wrap gap-2">
                     <template v-for="slot in availableTimeSlots" :key="slot.time">
                         <button v-if="slot.available" type="button" class="btn"
@@ -119,20 +152,45 @@ watch([() => bookingForm.value.bookingDate, () => bookingForm.value.reservedSeat
                         </button>
                     </template>
                 </div>
+                <!-- 無空位提示 -->
+                <div v-if="isNoVacant" class="alert alert-warning mt-2 py-2">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    抱歉，您所選之該日期的座位類型無法提供，請重新選擇預約條件或致電店家洽詢。
+                </div>
             </div>
 
             <div class="mb-4">
-                <label class="form-label fw-bold mb-2">4. 訪客資訊</label>
-                <div class="row g-3">
+                <label class="form-label fw-bold mb-3">4. 填寫預約資訊</label>
+                <div class="row g-4">
+                    <!-- 姓名 -->
                     <div class="col-md-4">
-                        <input type="text" class="form-control" placeholder="姓名" v-model="bookingForm.guestName">
+                        <label class="form-label small text-muted mb-1">預約人姓名</label>
+                        <input type="text" class="form-control" placeholder="請輸入姓名" v-model="bookingForm.guestName">
                     </div>
+
+                    <!-- 電話 -->
                     <div class="col-md-4">
-                        <input type="tel" class="form-control" placeholder="電話" v-model="bookingForm.guestPhone">
+                        <label class="form-label small text-muted mb-1">聯絡電話</label>
+                        <input type="tel" class="form-control" placeholder="請輸入電話" v-model="bookingForm.guestPhone">
                     </div>
+
+                    <!-- 人數選擇 -->
                     <div class="col-md-4">
-                        <input type="number" class="form-control" placeholder="人數" v-model="bookingForm.guestCount"
-                            min="1">
+                        <label class="form-label small text-muted mb-1">預約人數</label>
+                        <div class="input-group" style="max-width: 150px;">
+                            <button class="btn btn-outline-secondary" type="button"
+                                @click="changeGuestCount(-1)">-</button>
+                            <input type="text" class="form-control text-center bg-white"
+                                v-model="bookingForm.guestCount" readonly>
+                            <button class="btn btn-outline-secondary" type="button"
+                                @click="changeGuestCount(1)">+</button>
+                        </div>
+                        <!-- 動態顯示人數規則說明 -->
+                        <div v-if="bookingForm.reservedSeatType" class="form-text small mt-1">
+                            註：{{ bookingForm.reservedSeatType }}人座僅限預約 {{ Math.max(1, bookingForm.reservedSeatType - 1)
+                            }} ~ {{
+                            bookingForm.reservedSeatType }} 人
+                        </div>
                     </div>
                 </div>
             </div>

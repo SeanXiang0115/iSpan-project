@@ -102,21 +102,21 @@ public class BookingService {
         LocalTime closeTime = openHour.getCloseTime(); // 最後可訂位時間
 
         while (!currentTime.isAfter(closeTime)) {
-            // A. 計算當前時段的末端
+            // 1. 計算當前時段的末端
             LocalTime slotEnd = currentTime.plusMinutes(timeLimit);
 
-            // B. 調用下方createBooking()方法裡面的 countOverlappingBookings() repository 方法
+            // 2. 調用下方createBooking()方法裡面的 countOverlappingBookings() repository 方法
             long occupied = bookingRepository.countOverlappingBookings(
                     storeId, date, seatType, currentTime, slotEnd);
 
-            // C. 判斷是否為過去時間
+            // 3. 判斷是否為過去時間
             boolean isPast = date.equals(LocalDate.now()) && currentTime.isBefore(LocalTime.now());
 
-            // D. 判定並加入清單 (occupied < totalTables)
+            // 4. 判定並加入清單 (occupied < totalTables)
             boolean isAvailable = (occupied < totalTables) && !isPast;
             slots.add(new SlotAvailDto(currentTime.toString(), isAvailable));
 
-            // E. 往後跳過一個時段間隔
+            // 5. 往後跳過一個時段間隔
             currentTime = currentTime.plusMinutes(timeSlot);
 
         }
@@ -141,13 +141,13 @@ public class BookingService {
         }
 
         // 3. 檢查座位的可用性
-        // a. 獲取該店該桌型的總桌數
+        // 獲取該店該桌型的總桌數
         SeatId seatId = new SeatId(store.getStoreId(), dto.getReservedSeatType());
         Seat seatConfig = seatRepository.findById(seatId)
                 .orElseThrow(() -> new RuntimeException("該店家未設定此類別的座位"));
         Integer totalTables = seatConfig.getTotalCount();
 
-        // b. 檢查時間重疊的已訂位數量
+        // 檢查時間重疊的已訂位數量
         long currentBookings = bookingRepository.countOverlappingBookings(
                 store.getStoreId(), // id為該店家
                 dto.getBookingDate(), // 前台傳入的日期
@@ -155,8 +155,18 @@ public class BookingService {
                 startTime,
                 endTime);
 
+        // 在建立訂位前先檢查是否已滿額
         if (currentBookings >= totalTables) {
             throw new RuntimeException("該時段此類別座位已滿");
+        }
+
+        // 桌位人數限制：min = x-1 (最小 1), max = x
+        int seatType = dto.getReservedSeatType();
+        int minGuests = Math.max(1, seatType - 1);
+        int maxGuests = seatType;
+        if (dto.getGuestCount() < minGuests || dto.getGuestCount() > maxGuests) {
+            throw new RuntimeException(String.format("%d人座之預約人數需介於 %d ~ %d 人之間",
+                    seatType, minGuests, maxGuests));
         }
 
         // 4. 建立訂位實體並儲存
