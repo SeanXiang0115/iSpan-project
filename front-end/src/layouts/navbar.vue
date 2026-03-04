@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
+import Swal from 'sweetalert2';
 
 
 const router = useRouter();
@@ -15,6 +16,10 @@ const goTo = (path) => {
 const handleLogout = () => {
   authStore.logout();
   router.push('/login');
+};
+
+const handleMerchantApplication = () => {
+  router.push('/storeRegistration');
 };
 
 </script>
@@ -45,7 +50,7 @@ const handleLogout = () => {
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <!-- Template 1: Simple Button -->
           <li class="nav-item">
-            <a class="nav-link" href="#" @click.prevent="goTo('/about')">關於我們</a>
+            <a class="nav-link" href="#" @click.prevent="goTo('/about')">島嶼初心</a>
           </li>
 
           <!-- Template 2: Hover Dropdown -->
@@ -95,7 +100,11 @@ const handleLogout = () => {
           </li>
 
           <li class="nav-item">
-            <a class="nav-link" href="#" @click.prevent="goTo('/storeRegistration')">申請成為商家</a>
+            <a class="nav-link" href="#" @click.prevent="handleMerchantApplication">申請成為商家</a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link" href="#" @click.prevent="goTo('/test')">小功能測試區</a>
           </li>
         </ul>
 

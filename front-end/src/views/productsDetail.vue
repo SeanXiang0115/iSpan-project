@@ -1,23 +1,28 @@
 <script setup>
 
-import { ref, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
-import productsData from '@/data/productsData.json';
+
 import Swal from 'sweetalert2';
+import { useProductsDepot } from '@/stores/productsDepot';
+
 
 const route = useRoute();
 const cartStore = useCartStore();
-const products = ref(null);
+const depot = useProductsDepot();
 const buyQuantity = ref(1);
 
-onMounted(() => {
-    // 根據 URL 的 ID 找到對應商品
-    const id = Number(route.params.id);
-    const found = productsData.find(p => p.id ===id);
-    if(found){
-        products.value = found;
+const products = computed(() => {
+    const routedId = route.params.id;
+    // 使用 find 尋找時，確保雙方都是字串，避免類型錯誤 (如 1 !== "1")
+    const found = depot.products.find(p => String(p.id) === String(routedId));
+    
+    if (found) {
+        console.log(`[詳情頁動態追蹤] 商品: ${found.productName}, 當前最新庫存: ${found.stock}`);
     }
+    
+    return found;
 });
 
 const updateQuantity = (val) => {

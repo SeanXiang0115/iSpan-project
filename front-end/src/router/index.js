@@ -30,11 +30,39 @@ const routes = [
     path: '/userInfo',
     name: 'UserInfo',
     component: () => import('@/views/UserInfoView.vue'),
+    meta: { requiresAuth: true },
+    redirect: '/userInfo/profile', // Default redirect
+    children: [
+      {
+        path: 'profile',
+        name: 'UserProfile',
+        component: () => import('@/views/UserInfoContent.vue'),
+        props: { title: '個人資料' }
+      },
+      {
+        path: 'bookings',
+        name: 'UserBookingsTab',
+        component: () => import('@/views/UserInfoContent.vue'),
+        props: { title: '我的訂位' }
+      },
+      {
+        path: 'orders',
+        name: 'UserOrders',
+        component: () => import('@/views/UserInfoContent.vue'),
+        props: { title: '我的訂單' }
+      },
+      {
+        path: 'store-registration', // Child path
+        name: 'UserInfoStoreReg',
+        component: () => import('@/views/UserInfoStoreReg.vue')
+      }
+    ]
   },
   {
     path: '/storeRegistration',
     name: 'StoreRegistration',
     component: () => import('@/views/StoreRegistrationView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/shopStore',
@@ -47,7 +75,7 @@ const routes = [
     name: 'ShopCart'
   },
   {
-    path: '/storeInfo',
+    path: '/storeInfo/:id?',
     name: 'StoreInfo',
     component: () => import('@/views/StoreInfoView.vue'),
   },
@@ -64,17 +92,20 @@ const routes = [
   {
     path: '/owner/storeInfo',
     name: 'OwnerStoreInfo',
-    component: () => import('@/views/OwnerProfileView.vue')
+    component: () => import('@/views/OwnerProfileView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/owner/bookings/seats',
     name: 'Seats',
-    component: () => import('@/views/SeatsAndTimeView.vue')
+    component: () => import('@/views/SeatsAndTimeView.vue'),
+    meta: { requiresAuth: true }
   },
   {
     path: '/owner/bookings/data',
     name: 'Data',
-    component: () => import('@/views/BookingDataView.vue')
+    component: () => import('@/views/BookingDataView.vue'),
+    meta: { requiresAuth: true }
   },
   // {
   //   path: '/home',
@@ -102,6 +133,12 @@ const routes = [
     name: 'FeedbackAP'
   },
   {
+    path: '/oauth2/redirect',
+    name: 'OAuth2Redirect',
+    component: () => import('@/views/OAuth2RedirectHandler.vue'),
+    meta: { layout: 'blank' }
+  },
+  {
     path: '/register',
     component: () => import('@/views/RegisterView.vue'),
     name: 'Register',
@@ -121,6 +158,7 @@ const routes = [
   {
     path: '/admin',
     component: () => import('@/layouts/admin.vue'),
+    meta: { requiresAdminAuth: true },
     children: [
       {
         path: '',
@@ -196,19 +234,41 @@ const routes = [
       {
         path: 'backEnd/productsList',
         name: 'BackEndProductsList',
-        component: () => import('@/views/BackEndProductsList.vue') // placeholder
+        component: () => import('@/views/BackEndProductsList.vue')
       },
       {
-        path: 'backEnd/productsStock',
-        name: 'BackEndProductsStock',
-        component: () => import('@/views/BackEndproductsStock.vue') // placeholder
+        path: 'backEnd/productsOrders',
+        name: 'BackEndproductsOrders',
+        component: () => import('@/views/BackEndproductsOrders.vue')
+      }, {
+        path: '/feedbackAP',
+        name: 'FeedbackAP',
+        component: () => import('@/views/FeedbackAPView.vue') // placeholder
       },
+      {
+        path: 'admins/list',
+        name: 'AdminsList',
+        component: () => import('@/views/AdminListView.vue'), // placeholder
+        // TODO: 測試完成後，移除此行恢復強制登入檢查
+        meta: { requiresAdminAuth: false }
+      }
     ]
+  },
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: () => import('@/views/AdminLoginView.vue'),
+    meta: { layout: 'blank' }
   },
   {
     path: '/getusertest',
     name: 'GetUserTest',
     component: () => import('@/views/GetUserTestView.vue')
+  },
+  {
+    path: '/test',
+    name: 'Test',
+    component: () => import('@/views/TestView.vue')
   }
 
 ];
@@ -216,9 +276,57 @@ const routes = [
 // 建立router
 const router = createRouter({
   history: createWebHistory(),
-  routes: routes
+  routes: routes,
+  scrollBehavior(to, from, savedPosition) {
+    // 始終滾動到頂部
+    return { top: 0 }
+  }
 });
 
 
+
+import { useAuthStore } from '@/stores/auth';
+import { useAdminAuthStore } from '@/stores/adminAuth';
+import Swal from 'sweetalert2';
+
+// 路由守衛
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore();
+  const adminAuthStore = useAdminAuthStore();
+
+  if (to.meta.requiresAdminAuth) {
+    // [直接檢查 Local Storage 的方式]
+    // 說明：若希望連「手動刪除 Local Storage」時，也能在切換頁面瞬間立刻攔截，可取消以下註解
+    // const localAdminToken = localStorage.getItem('adminAccessToken');
+    // if (!localAdminToken) {
+    //   await adminAuthStore.handleLogoutAndNotify('unauthorized');
+    //   return next('/admin/login');
+    // }
+
+    // Check if token is expired, useAdminAuthStore.isExpired will be implemented next
+    if (adminAuthStore.isExpired) {
+      await adminAuthStore.handleLogoutAndNotify('timeout');
+      return next('/admin/login');
+    }
+
+    if (!adminAuthStore.isLoggedIn) {
+      await adminAuthStore.handleLogoutAndNotify('unauthorized');
+      return next('/admin/login');
+    }
+  }
+
+  if (to.meta.requiresAuth) {
+    if (authStore.isExpired) {
+      await authStore.handleLogoutAndNotify('timeout');
+      return next('/login');
+    }
+
+    if (!authStore.isLoggedIn) {
+      await authStore.handleLogoutAndNotify('unauthorized');
+      return next('/login');
+    }
+  }
+  next();
+});
 
 export default router;

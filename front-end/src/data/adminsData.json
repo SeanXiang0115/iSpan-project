@@ -1,0 +1,30 @@
+[
+    {
+        "id": 1,
+        "username": "admin01",
+        "fullName": "王小明",
+        "position": "超級管理員",
+        "isBanned": false
+    },
+    {
+        "id": 2,
+        "username": "admin02",
+        "fullName": "李小華",
+        "position": "營運經理",
+        "isBanned": false
+    },
+    {
+        "id": 3,
+        "username": "admin03",
+        "fullName": "張小強",
+        "position": "客服專員",
+        "isBanned": true
+    },
+    {
+        "id": 4,
+        "username": "admin04",
+        "fullName": "陳小美",
+        "position": "財務主管",
+        "isBanned": false
+    }
+]

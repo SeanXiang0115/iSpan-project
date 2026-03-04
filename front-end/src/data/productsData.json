@@ -1,6 +1,6 @@
 [
     {
-        "id": 1,
+        "id": "0001",
         "productName": "【晨曦金】 永恆系列不鏽鋼餐具組",
         "price": 1100,
         "image": "/src/pictures/gold.jpg",
@@ -9,8 +9,8 @@
         "StockingTime": "2024-06-01"
     },
     {
-        "id": 2,
-        "productName": "永恆工藝．循環再生餐具組 【月光銀】",
+        "id": "0002",
+        "productName": "永恆工藝．循環餐具組 【月光銀】",
         "price": 1100,
         "image": "/src/pictures/silver.jpg",
         "description": "捨棄一次性餐具的浪費。我們採用 100% 可回收高品質鋼材，經久耐用。金色款採用環保真空電鍍技術，減少廢水產生；銀色款保留金屬原色美感，減少加工程序。這不僅是餐具，更是您對地球的一份承諾。",
@@ -18,7 +18,7 @@
         "StockingTime": "2024-06-15"
     },
     {
-        "id": 3,
+        "id": "0003",
         "productName": "植萃癒合．三效美體護理組(三合一)",
         "price": 2680,
         "image": "/src/pictures/cream.jpg",
@@ -27,8 +27,8 @@
         "StockingTime": "2024-03-11"
     },
     {
-        "id": 4,
-        "productName": "【天然原萃系列】果實之禮：手作無添加果糖 (減糖配方)",
+        "id": "0004",
+        "productName": "【天然原萃】手作無添加果糖 (減糖)",
         "price": 320,
         "image": "/src/pictures/candy.jpg",
         "description": "我們支持公平貿易與在地農植。糖果僅使用純天然水果與零卡替代糖，不含人工色素；香料則無化學添加與防腐劑，保留植物最原始的辛香，讓味蕾回歸純淨。",
@@ -36,7 +36,7 @@
         "StockingTime": "2024-05-08"
     },
     {
-        "id": 5,
+        "id": "0005",
         "productName": "純淨補水．Tritan 永續運動瓶",
         "price": 650,
         "image": "/src/pictures/bottle.jpg",
@@ -45,7 +45,7 @@
         "StockingTime": "2024-08-21"
     },
     {
-        "id": 6,
+        "id": "0006",
         "productName": "植感定型．天然蠟豆造型髮蠟",
         "price": 520,
         "image": "/src/pictures/hairWax.jpg",
@@ -54,8 +54,8 @@
         "StockingTime": "2025-01-01"
     },
     {
-        "id": 7,
-        "productName": "【大地秘境】產地直送純淨辛香料（密封手作罐）",
+        "id": "0007",
+        "productName": "【大地秘境】產地直送純淨辛香料",
         "price": 480,
         "image": "/src/pictures/spices.jpg",
         "description": "我們相信最美味的香氣來自於健康的土壤。這款香料系列嚴選自永續農法認證的在地小農，堅持不噴灑化學農藥與人工除草劑。100% 純粹： 絕不添加防腐劑、人工色素、味精或二氧化矽（抗結塊劑）。低碳減製： 採用自然風乾與低溫研磨技術，最大程度保留植物芳香分子，同時降低生產能耗。永續包裝： 使用可重複利用的環保玻璃罐與軟木塞密封，減少塑膠廢棄物，用完後的瓶罐可用於香草插瓶或日常收納。",

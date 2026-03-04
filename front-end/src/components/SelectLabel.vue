@@ -1,18 +1,38 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import storeAPI from '@/api/store';
 import BaseButton from '@/components/common/BaseButton.vue';
 
-// 模擬 SQL 寫死的標籤資料表
-const LabelTable = ['寵物友善', '有插座', '日式料理', '禁帶外食', '有停車場', '禁止趙活與狗入內'];
+// 標籤資料案
+const categories = ref([]);
 
-const selected = ref(LabelTable['0']);
+const selected = ref(null);
 const emit = defineEmits(['add']);
+
+const fetchCategories = async () => {
+    try {
+        const response = await storeAPI.getAllCategories();
+        if (response && response.success) {
+            categories.value = response.data;
+            if (categories.value.length > 0) {
+                selected.value = categories.value[0];
+            }
+        }
+    } catch (error) {
+        console.error('獲取標籤失敗:', error);
+    }
+};
+
+onMounted(() => {
+    fetchCategories();
+});
 
 const handleAdd = () => {
     if (!selected.value) {
         alert('請選擇一個標籤！');
         return;
     } else {
+        // 發送整個物件，以便前端顯示名稱，存檔時使用 ID
         emit('add', selected.value);
     }
 };
@@ -22,8 +42,8 @@ const handleAdd = () => {
     <div class="label-selector-container">
         <div class="input-group">
             <select v-model="selected" class="form-select border-gdg custom-select">
-                <option v-for="item in LabelTable" :key="item" :value="item">
-                    {{ item }}
+                <option v-for="item in categories" :key="item.categoryId" :value="item">
+                    {{ item.categoryName }}
                 </option>
             </select>
 

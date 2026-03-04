@@ -7,8 +7,8 @@
           <i class="bi bi-chat-dots"></i>
         </div>
         <div class="header-text">
-          <h1 class="page-title">客戶回饋</h1>
-          <p class="page-subtitle">您的意見對我們很重要，感謝您撥冗填寫</p>
+          <h1 class="page-title">意見回饋</h1>
+          <p class="page-subtitle">您的回饋對我們很重要，感謝您撥冗填寫</p>
         </div>
       </div>
     </div>
@@ -22,7 +22,7 @@
           <div>
             <strong>感謝您的回饋！</strong>
             <p>回報編號：<span class="report-number">{{ reportNumber }}</span></p>
-            <p>我們已收到您的意見，確認信已寄送至您的電子郵件</p>
+            <p>確認信已寄送至您的電子郵件</p>
           </div>
         </div>
 
@@ -204,6 +204,7 @@
 
 <script>
 import { ref, computed } from 'vue';
+import axios from 'axios';
 
 export default {
   name: 'FeedbackView',
@@ -303,8 +304,26 @@ export default {
         const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         reportNumber.value = `FB${timestamp.toString().slice(-6)}${random}`;
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // Map Issue Type
+        const issueTypeMap = {
+          '商店資訊有誤': 1,
+          '網站使用回饋': 2,
+          '服務品質問題': 3,
+          '功能建議': 4,
+          '技術問題': 5,
+          '其他': 6
+        };
+
+        const payload = {
+          name: formData.value.contactName,
+          phone: formData.value.contactPhone,
+          email: formData.value.email,
+          contents: formData.value.feedbackContent,
+          typeId: issueTypeMap[formData.value.issueType] || 1 // Fallback to 1 just in case
+        };
+
+        // Real API call
+        await axios.post('http://localhost:8080/api/feedback', payload);
 
         // Show success banner
         showSuccessMessage.value = true;

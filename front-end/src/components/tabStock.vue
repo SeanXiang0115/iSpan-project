@@ -1,32 +1,33 @@
-<script >
+tabStock.vue
 
-import { ref, computed } from 'vue';
-import productsData from '@/data/productsData.json'
-// import StockCRUD from '@/components/tabStockCRUD.vue'
+<script setup>
 
-// const products = ref('productsData')
-// const currentTab = ref('StockList')
+import { ref, computed} from 'vue';
+// import productsData from '@/data/productsData.json'
+import {useProductsDepot} from '@/stores/productsDepot';
 
-// const switchTab = (tabName) => {
-//     currentTab.value = tabName;
-// }
+
+import TabStockCRUD from '@/components/tabStockCRUD.vue';
 
 
 
+// const products = ref(productsData);
 
+//定義展開狀態
+const expandedId = ref(null);
 
+//定義切換函式
+const toggleEdit = (id) =>{
+    if (expandedId.value === id) {
+        expandedId.value = null;    // 點擊同一行則收起
 
-export default {
-    name: 'TabStock',
-    setup() {
-        const products = ref(productsData);
-
-
-        return {
-            products
-        }
+    }else {
+        expandedId.value = id;   // 點擊不同的行則展開
     }
-};
+}
+
+const depot = useProductsDepot();
+const products = computed(() => depot.products);
 
 
 
@@ -41,58 +42,65 @@ export default {
 
 
 <!-- Recent Orders Table -->
-<!-- <div v-if="currentTab === 'StockList'" class="content-card"> -->
+
     <div class="content-card">
         <div class="card-header">
-            <h2 class="card-title">所有訂單</h2>
+            <h2 class="card-title">所有商品</h2>
             
         </div>
         <div class="table-responsive">
             <table class="data-table">
             <thead>
                 <tr>
-                <th>訂單編號</th>
+                <th>商品編號</th>
                 <th>商品</th>
-                <th>金額</th>
+                <th>售價</th>
                 <th>庫存數量</th>
                 <th>日期</th>
                 <th>編輯庫存</th>
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="item in products" :key="item.id">
-                <td class="order-id">{{ item.id }}</td>
-                <td>{{ item.productName }}</td>
-                <td class="amount">NT$ {{ item.price }}</td>
-                <td class="stock">{{ item.stock }}</td>
-                
-                <td class="date">{{ item.StockingTime }}</td>
+                <template v-for="item in products" :key="item.id" >
+                    <tr :class="{'is-editing': expandedId === item.id}" >
+                        <td class="order-id">{{ item.id }}</td>
+                        <td>{{ item.productName }}</td>
+                        <td class="amount">NT$ {{ item.price }}</td>
+                        <td class="stock">{{ item.stock }}</td>
+                        
+                        <td class="date">{{ item.StockingTime }}</td>
+                        <td>
+                            <div class ="action-buttons">
+                                <button @click="toggleEdit(item.id)" class="btn-action btn-edit" title="編輯">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                
+                            </div>
+                        </td>
+                    </tr>
 
-
-                <td>
-                    <div class="action-buttons">
-                    <a  @click="switchTab(StockCRUD)"
-                    class="btn-action btn-edit" title="編輯">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    </div>
-                </td>
+                <tr v-if="expandedId === item.id" class="edit-row">
+                    <td colspan="6">
+                        <div class="edit-container">
+                            <TabStockCRUD :product="item" @close="expandedId = null"/>
+                        </div>
+                    </td>
                 </tr>
+                </template>
             </tbody>
             </table>
+            <div v-if="products.length === 0" class="empty-state">
+                目前沒有任何商品，請前往「新增商品」頁籤。
+            </div>
         </div>
     </div>
-<!-- </div> -->
 
-    <!-- <div v-else-if="currentTab === 'StockCRUD'" class="contnd-card">
-        <div class="card-header">
-            <h2 class="card-title">編輯庫存</h2>
-            <button @click="switchTab('StockList')" class="btn-action btn-view">
-                返回列表
-            </button>
-        </div>
-        <StockCRUD />
-    </div> -->
+
+
+
+
+
+
 </template>
 
 
@@ -234,5 +242,33 @@ export default {
         background-color: #bfdbfe;
         }
     }
+}
+
+
+/* 下拉展開樣式 */
+.edit-row {
+    background-color: #f8fafc; /* 給予淡淡的背景色區隔 */
+    animation: fadeIn 0.3s ease; /* 增加一個簡單的淡入效果 */
+}
+
+.edit-container {
+    padding: 1.5rem;
+    border: 1px inset #e5e7eb;
+}
+
+/* 當該行正在編輯時，改變底色視覺回饋 */
+tr.is-editing {
+    background-color: #eff6ff !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 修正按鈕樣式，確保 button 不會有預設邊框 */
+.btn-action {
+    border: none;
+    outline: none;
 }
 </style>

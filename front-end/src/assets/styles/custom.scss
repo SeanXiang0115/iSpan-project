@@ -151,7 +151,7 @@ body {
     margin: 0 auto;
     padding: 0 20px;
     width: 100%;
-    height: 100vh;
+    height: 120vh;
     /* Occupy full viewport height */
     display: flex;
     flex-direction: column;
@@ -341,4 +341,32 @@ $status-pending: #fbbf24;
     min-height: 500px; // Ensure visibility
     border-radius: 12px;
     z-index: 1; // Ensure it sits below overlays if any
+}
+
+// Footer Styles
+.footer-gdg {
+    background-color: #f8f9fa; // Light gray background
+    border-top: 1px solid rgba(160, 150, 115, 0.2); // Subtle gold border
+    color: #6c757d;
+
+    .text-gdg {
+        color: $gdg-gold !important;
+    }
+
+    .footer-link {
+        color: #6c757d;
+        text-decoration: none;
+        transition: color 0.2s ease-in-out;
+
+        &:hover {
+            color: $gdg-gold;
+            text-decoration: none;
+        }
+    }
+
+    .btn-gdg {
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+        border-radius: 50px; // Pill shape for contact button
+    }
 }

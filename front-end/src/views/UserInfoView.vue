@@ -21,7 +21,7 @@
       <nav class="sidebar-nav px-3">
         <ul class="nav nav-pills flex-column">
           <li v-for="(item, index) in menuItems" :key="index" class="nav-item">
-            <a href="#" :class="['nav-link', { 'active': activeItem === index }]" @click.prevent="activeItem = index">
+            <a href="#" :class="['nav-link', { 'active': isActive(item.name) }]" @click.prevent="navigateTo(item.name)">
               <i :class="['bi', item.icon, 'me-2']"></i>
               <span class="nav-text" v-show="!isCollapsed">{{ item.text }}</span>
             </a>
@@ -37,11 +37,12 @@
     <main class="main-content flex-grow-1" :class="{ 'content-shifted': !isCollapsed }">
       <div class="p-4 bg-light min-vh-100">
         <div class="container-fluid">
-          <h2 class="mb-4">內容區域</h2>
-          <div class="card card-gdg p-4">
-            <p>正在編輯：{{ menuItems[activeItem].text }}</p>
-            <p class="text-muted">此處將放置各項目的詳細內容。</p>
-          </div>
+            <!-- Router View for Content -->
+            <router-view v-slot="{ Component }">
+              <transition name="fade" mode="out-in">
+                <component :is="Component" />
+              </transition>
+            </router-view>
         </div>
       </div>
     </main>
@@ -49,17 +50,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
+const router = useRouter()
+const route = useRoute()
 const isCollapsed = ref(false)
 const isMobileOpen = ref(false)
-const activeItem = ref(0)
 
 const menuItems = [
-  { text: '個人資料', icon: 'bi-person' },
-  { text: '我的訂位', icon: 'bi-calendar-check' },
-  { text: '我的訂單', icon: 'bi-receipt' },
-  { text: '客服訊息', icon: 'bi-chat-dots' }
+  { text: '個人資料', icon: 'bi-person', name: 'UserProfile' },
+  { text: '我的訂位', icon: 'bi-calendar-check', name: 'UserBookingsTab' },
+  { text: '我的訂單', icon: 'bi-receipt', name: 'UserOrders' },
+  { text: '我的訊息', icon: 'bi-chat-dots', name: 'UserInfoStoreReg' } 
 ]
 
 const toggleSidebar = () => {
@@ -71,11 +74,21 @@ const toggleSidebar = () => {
   }
 }
 
-// Handle window resize to reset states if needed
 const handleResize = () => {
   if (window.innerWidth >= 768) {
     isMobileOpen.value = false
   }
+}
+
+const navigateTo = (routeName) => {
+    router.push({ name: routeName });
+    if (window.innerWidth < 768) {
+        isMobileOpen.value = false; // Close mobile sidebar on nav
+    }
+}
+
+const isActive = (routeName) => {
+    return route.name === routeName;
 }
 
 onMounted(() => {

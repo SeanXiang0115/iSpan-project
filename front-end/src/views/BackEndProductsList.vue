@@ -32,7 +32,6 @@ const currentTabComponent = computed(() => components[currentTab.value])
 
 <br/>
 <br/>
-<div class="erp-transfer-page">
     <div class="page-header">
         <h1 class="page-title">商品管理</h1>
         <p class="page-subtitle">管理庫存與商品資訊</p>
@@ -74,7 +73,7 @@ const currentTabComponent = computed(() => components[currentTab.value])
                     
                 
             
-</div>
+<!-- </div> -->
 
 </template>
 
