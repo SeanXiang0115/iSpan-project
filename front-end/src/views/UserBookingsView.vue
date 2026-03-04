@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import EditBookingData from '@/components/EditBookingData.vue';
 import Swal from 'sweetalert2';
 import api from '@/api/config';
+import bookingAPI from '@/api/booking';
 import { useAuthStore } from '@/stores/auth';
 
 const authStore = useAuthStore();
@@ -47,7 +48,7 @@ const fetchBookings = async () => {
         isLoading.value = true;
         // 調用後端 BookingController 的 @GetMapping("/user/{userId}")
         // 注意：依照專案慣例，後端會包裝成 { success: true, data: [...] }
-        const response = await api.get(`/bookings/user/${userId.value}`);
+        const response = await bookingAPI.getUserBookings(userId.value);
         console.log('API Response:', response);
 
         // 如果 response 本身就是陣列，直接使用；如果是 ApiResponse 物件，取 .data
@@ -70,7 +71,7 @@ const handleUpdate = async (updatedItem) => {
         };
 
         // 調用後端 BookingController 的 @PutMapping("/{bookingId}")
-        await api.put(`/bookings/${updatedItem.id}`, updateDto);
+        await bookingAPI.updateUserBooking(updatedItem.id, updateDto);
 
         // 更新本地狀態
         const index = bookings.value.findIndex(item => item.id === updatedItem.id);
@@ -107,7 +108,7 @@ const handleDelete = async (booking) => {
     if (result.isConfirmed) {
         try {
             // 調用後端 BookingController 的 @DeleteMapping("/{bookingId}")
-            await api.delete(`/bookings/${booking.id}`);
+            await bookingAPI.deleteBooking(booking.id);
 
             // 更新本地狀態
             bookings.value = bookings.value.filter(item => item.id !== booking.id);

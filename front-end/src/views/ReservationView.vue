@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import bookingAPI from '@/api/booking';
 import BaseButton from '@/components/common/BaseButton.vue';
 import Swal from 'sweetalert2';
 import { useAuthStore } from '@/stores/auth'; // 引入你的身份驗證 Store
@@ -73,15 +73,17 @@ const fetchStoreConfig = async () => {
         console.warn('店鋪 ID 無效，不發送請求');
         return;
     }
-    const res = await axios.get(`/api/bookings/config/${storeId}`);
-    storeConfig.value = res.data;
+    const res = await bookingAPI.getBookingConfig(storeId);
+    storeConfig.value = res.data || res;
 };
 const fetchSlots = async () => {
     if (!bookingForm.value.bookingDate || !bookingForm.value.reservedSeatType) return;
-    const res = await axios.get('/api/bookings/available-slots', {
-        params: { storeId, date: bookingForm.value.bookingDate, seatType: bookingForm.value.reservedSeatType }
+    const res = await bookingAPI.getAvailableSlots({
+        storeId,
+        date: bookingForm.value.bookingDate,
+        seatType: bookingForm.value.reservedSeatType
     });
-    availableTimeSlots.value = res.data;
+    availableTimeSlots.value = res.data || res;
 };
 
 // 重置與送出方法
@@ -95,11 +97,7 @@ const handleBooking = async () => {
         return;
     }
     // 調用寫好的 POST API
-    await axios.post('/api/bookings', bookingForm.value, {
-        headers: {
-            Authorization: `Bearer ${authStore.token}` // 取得 token
-        }
-    });
+    await bookingAPI.createBooking(bookingForm.value);
     await Swal.fire('訂位成功！', '', 'success');
     router.push({ name: 'UserBookingsTab' });
 };

@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import EditBookingData from '@/components/EditBookingData.vue';
 import Swal from 'sweetalert2';
-import api from '@/api/config';
+import bookingAPI from '@/api/booking';
 import storeAPI from '@/api/store';
 
 const bookingList = ref([]);
@@ -44,7 +44,7 @@ const fetchBookings = async () => {
     if (!storeId.value) throw new Error('無法識別店家身分');
 
     // 2. 根據 storeId 獲取訂位列表
-    const response = await api.get(`/bookings/store/${storeId.value}`);
+    const response = await bookingAPI.getStoreBookings(storeId.value);
     console.log('Shop Bookings Response:', response);
 
     const rawList = Array.isArray(response) ? response : (response.data || []);
@@ -72,7 +72,7 @@ const handleDelete = async (booking) => {
 
   if (result.isConfirmed) {
     try {
-      await api.delete(`/bookings/${booking.id}`);
+      await bookingAPI.deleteBooking(booking.id);
       bookingList.value = bookingList.value.filter(item => item.id !== booking.id);
 
       Swal.fire({
@@ -98,7 +98,7 @@ const handleUpdate = async (updatedItem) => {
     };
 
     // 調用後端專為店家設計的更新端點
-    await api.put(`/bookings/store/${updatedItem.id}`, updateDto);
+    await bookingAPI.updateStoreBooking(updatedItem.id, updateDto);
 
     // 成功後重新抓取清單，以確保與後端的 endTime 計算結果同步（或者直接更新本地）
     await fetchBookings();
