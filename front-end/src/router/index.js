@@ -15,6 +15,11 @@ const routes = [
         component: () => import('@/views/HomeView.vue'),
       },
       {
+        path: 'bookings',
+        name: 'UserBookingsTab',
+        component: () => import('@/views/UserBookingsView.vue')
+      },
+      {
         path: 'login',
         name: 'Login',
         component: () => import('@/views/LoginView.vue'),
@@ -52,66 +57,66 @@ const routes = [
         ]
       },
       {
-        path: 'storeRegistration',
+        path: '/storeRegistration',
         name: 'StoreRegistration',
         component: () => import('@/views/StoreRegistrationView.vue'),
         meta: { requiresAuth: true }
       },
       {
-        path: 'shopStore',
+        path: '/shopStore',
         component: () => import('@/views/shopStore.vue'),
         name: 'ShopStore'
       },
       {
-        path: 'Cart',
+        path: '/Cart',
         component: () => import('@/views/shopCart.vue'),
         name: 'ShopCart'
       },
       {
-        path: 'storeInfo/:id?',
-        name: 'StoreInfo',
-        component: () => import('@/views/StoreInfoView.vue'),
-      },
-      {
-        path: 'storeInfo/reservation',
+        path: '/storeInfo/reservation/:id',
         name: 'Reservation',
         component: () => import('@/views/ReservationView.vue'),
       },
       {
-        path: 'user/bookings',
-        name: 'UserBookings',
-        component: () => import('@/views/UserBookingsView.vue')
+        path: '/storeInfo/:id?',
+        name: 'StoreInfo',
+        component: () => import('@/views/StoreInfoView.vue'),
       },
       {
-        path: 'owner/storeInfo',
+        path: '/owner/storeInfo',
         name: 'OwnerStoreInfo',
         component: () => import('@/views/OwnerProfileView.vue'),
         meta: { requiresAuth: true }
       },
       {
-        path: 'owner/bookings/seats',
+        path: '/owner/bookings/seats',
         name: 'Seats',
         component: () => import('@/views/SeatsAndTimeView.vue'),
         meta: { requiresAuth: true }
       },
       {
-        path: 'owner/bookings/data',
+        path: '/owner/bookings/data',
         name: 'Data',
         component: () => import('@/views/BookingDataView.vue'),
         meta: { requiresAuth: true }
       },
+      // {
+      //   path: '/home',
+      //   component: () => import('@/views/HomeView.vue'),
+      //   name: 'Home'
+      // },
       {
-        path: 'about',
+        path: '/about',
         component: () => import('@/views/AboutView.vue'),
         name: 'About'
       },
       {
-        path: 'mapSearch',
+        path: '/mapSearch',
         component: () => import('@/views/MapSearchView.vue'),
         name: 'MapSearch'
       },
       {
-        path: 'feedback',
+        path: '/feedback',
         component: () => import('@/views/FeedbackView.vue'),
         name: 'Feedback'
       },
