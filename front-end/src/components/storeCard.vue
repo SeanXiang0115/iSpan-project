@@ -3,7 +3,7 @@ import {useCartStore} from '@/stores/cart'
 import { useProductsDepot } from '@/stores/productsDepot';
 import Swal from 'sweetalert2';
 
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import BaseCard from '@/components/common/BaseCard.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
@@ -86,8 +86,10 @@ const productsList = computed(() => {
 
 
 <template>
-<div class="shop-container">
+    <div class="shop-container">
+
     <div class="shop-grid">
+
     <!-- 卡片  -->
     <BaseCard 
         v-for="item in productsList" 

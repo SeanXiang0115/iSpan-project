@@ -26,9 +26,9 @@ const orderForm = ref({
     note: ''
 })
 
-onMounted( async () => {
+onMounted(  () => {
     
-        await new TwCitySelector({
+        new TwCitySelector({
         el: '#twzipcode',
         elCounty: '.county',
         elDistrict: '.district', // 區域 select 的 class
@@ -38,8 +38,18 @@ onMounted( async () => {
         onZipcodeChange: (val) => { orderForm.value.zipcode = val }
         });
 
-    
+        
+
+        setTimeout(() => {
+        console.log('twzipcode el:', document.querySelector('#twzipcode'))
+        console.log('county el:', document.querySelector('#twzipcode .county'))
+        console.log('county value:', document.querySelector('#twzipcode .county')?.value)
+        console.log('district value:', document.querySelector('#twzipcode .district')?.value)
+        console.log('zipcode value:', document.querySelector('#twzipcode .zipcode')?.value)
+    }, 500)
 })
+
+
 
 const shippingFee = computed(() => {
     if (!cartStore.items || cartStore.items.length === 0) return 0;
@@ -55,8 +65,9 @@ const isValidEmail = (email) => {
 };
 
 const handleCheckout = async () => {
+    console.log('表單內容：', orderForm.value) 
     // 簡單表單驗證
-    if (!orderForm.value.name || !orderForm.value.phone || !orderForm.value.city || !orderForm.value.district || !orderForm.value.street) {
+    if (!orderForm.value.name || !orderForm.value.phone ||  !orderForm.value.street) {
         Swal.fire('錯誤', '請填寫完整的收件人資訊', 'error')
         return
     }
@@ -118,10 +129,13 @@ const handleCheckout = async () => {
 
             cartStore.clearCart();
 
-            Swal.fire('成功', `訂單已建立！狀態為：${currentStatus}`, 'success')
+            Swal.fire({
+                icon: 'success',
+                title: '成功',
+                text: `訂單已建立！狀態為：${currentStatus}`,
+                footer: `<p style="font-weight: bold; font-size: 16px; color: 198754;">訂單編號為: ${orderNumber}</p>`
+            })
 
-            
-            
             router.push('/shopStore')
             // 測試用：清空購物車並導回首頁
             // cartStore.items = []

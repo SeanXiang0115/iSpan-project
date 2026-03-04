@@ -12,6 +12,7 @@ public class CartDTO {
     private Integer productId;
     private String productName;
     private BigDecimal price;
+    private String image;
 
 }
 
