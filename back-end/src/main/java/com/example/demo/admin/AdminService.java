@@ -171,4 +171,9 @@ public class AdminService {
         return adminRepository.findByAccount(account)
                 .orElseThrow(() -> new RuntimeException("Admin not found with account: " + account));
     }
+
+    public AdminResponse getCurrentAdminResponse() {
+        Admin currentAdmin = getCurrentAdmin();
+        return mapToAdminResponse(currentAdmin);
+    }
 }

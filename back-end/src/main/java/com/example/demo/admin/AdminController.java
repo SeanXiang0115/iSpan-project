@@ -60,6 +60,12 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Admins retrieved successfully", adminService.getAllAdmins()));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<AdminResponse>> getCurrentAdmin() {
+        AdminResponse response = adminService.getCurrentAdminResponse();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
             @Valid @RequestBody com.example.demo.auth.dto.ForgotPasswordRequest request) {
