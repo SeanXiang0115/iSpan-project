@@ -53,6 +53,11 @@ const routes = [
             path: 'store-registration',
             name: 'UserInfoStoreReg',
             component: () => import('@/views/UserInfoStoreReg.vue')
+          },
+          {
+            path: 'feedback',
+            name: 'UserInfoFeedback',
+            component: () => import('@/views/UserInfoFeedback.vue')
           }
         ]
       },

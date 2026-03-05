@@ -68,6 +68,7 @@ public class FeedbackService {
     }
 
     public List<FeedbackListDto> getFeedbacksByEmail(String email) {
+
         User user = userRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("找不到該使用者"));
 
@@ -81,9 +82,9 @@ public class FeedbackService {
             // 帶上類別名稱
             dto.setTypeName(f.getFeedbackTypes() != null ? f.getFeedbackTypes().getTypeName() : "一般");
             // 帶上「完整」內容
-            dto.setFullContents(f.getContents());
-            dto.setReply(f.getReply() != null ? f.getReply() : "尚未回覆");
-            dto.setRepliedAt(f.getRepliedAt() != null ? f.getRepliedAt().format(formatter) : "-");
+            dto.setContents(f.getContents());
+            dto.setReply(f.getReply()); // null when no reply yet
+            dto.setRepliedAt(f.getRepliedAt() != null ? f.getRepliedAt().format(formatter) : null);
             return dto;
         }).collect(Collectors.toList());
     }
