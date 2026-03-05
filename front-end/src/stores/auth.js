@@ -44,19 +44,22 @@ export const useAuthStore = defineStore('auth', {
          */
         async handleLogoutAndNotify(type = 'timeout') {
             this.logoutLocally();
-            const config = type === 'timeout'
-                ? { title: '登入逾期', text: '您的登入工作階段已到期，請重新登入' }
-                : { title: '請先登入', text: '此頁面需要登入後才能訪問' };
+            let config;
+            if (type === 'idle') {
+                config = { title: '閒置逾久，已自動登出', text: '閒置過久，已自動登出', confirmButtonText: '重新登入' };
+            } else if (type === 'timeout') {
+                config = { title: '登入逾期', text: '您的登入工作階段已到期，請重新登入', confirmButtonText: '重新登入' };
+            } else {
+                config = { title: '請先登入', text: '此頁面需要登入後才能訪問', confirmButtonText: '前往登入' };
+            }
 
             const Swal = (await import('sweetalert2')).default;
             await Swal.fire({
                 icon: 'warning',
                 title: config.title,
                 text: config.text,
-                confirmButtonText: type === 'timeout' ? '重新登入' : '前往登入'
+                confirmButtonText: config.confirmButtonText
             });
-
-            // 由於 store 無法直接存取 router，這部分留給呼叫端處理跳轉，或從外部傳入 router
         },
         async syncUserProfile() {
 

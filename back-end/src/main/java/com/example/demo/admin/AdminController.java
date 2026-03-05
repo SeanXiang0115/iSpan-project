@@ -5,14 +5,18 @@ import com.example.demo.admin.dto.AdminLoginResponse;
 import com.example.demo.admin.dto.AdminRegistrationRequest;
 import com.example.demo.admin.dto.AdminResponse;
 import com.example.demo.common.dto.ApiResponse;
-
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.WebUtils;
 
 @RestController
 @RequestMapping("/api/admins")
@@ -22,39 +26,71 @@ public class AdminController {
     private final AdminService adminService;
     private final AdminPasswordResetService adminPasswordResetService;
 
+    @Value("${jwt.access-token-expiration-ms}")
+    private long accessTokenExpirationMs;
+
+    @Value("${jwt.refresh-token-expiration-ms}")
+    private long refreshTokenExpirationMs;
+
+    // ===== 登入 =====
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody AdminLoginRequest request) {
+    public ResponseEntity<?> login(
+            @Valid @RequestBody AdminLoginRequest request,
+            HttpServletResponse response) {
         try {
-            AdminLoginResponse response = adminService.login(request);
-
-            ResponseCookie jwtCookie = ResponseCookie.from("adminAccessToken", response.getAccessToken())
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(24 * 60 * 60)
-                    .build();
-
-            ResponseCookie refreshCookie = ResponseCookie.from("adminRefreshToken", response.getRefreshToken())
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(7 * 24 * 60 * 60)
-                    .build();
-
-            // Clear tokens from response body
-            response.setAccessToken(null);
-            response.setRefreshToken(null);
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                    .body(ApiResponse.success("Admin login successful", response));
+            AdminLoginResponse loginResponse = adminService.login(request);
+            setCookies(response, loginResponse.getAccessToken(), loginResponse.getRefreshToken());
+            return ResponseEntity.ok(ApiResponse.success("Admin login successful", loginResponse.getAdmin()));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(e.getMessage()));
         }
     }
 
+    // ===== 登出 =====
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
+        clearCookies(response);
+        return ResponseEntity.ok(ApiResponse.success("Admin logout successful", null));
+    }
+
+    // ===== 刷新 Token =====
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(
+            HttpServletRequest request,
+            HttpServletResponse response) {
+
+        Cookie refreshCookie = WebUtils.getCookie(request, "adminRefreshToken");
+        if (refreshCookie == null || refreshCookie.getValue() == null || refreshCookie.getValue().isBlank()) {
+            clearCookies(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("No refresh token found"));
+        }
+
+        try {
+            AdminLoginResponse loginResponse = adminService.refreshToken(refreshCookie.getValue());
+            setCookies(response, loginResponse.getAccessToken(), loginResponse.getRefreshToken());
+            return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", loginResponse.getAdmin()));
+        } catch (Exception e) {
+            clearCookies(response);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Invalid or expired refresh token"));
+        }
+    }
+
+    // ===== 取得目前登入管理員 =====
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentAdmin() {
+        try {
+            Admin admin = adminService.getCurrentAdmin();
+            return ResponseEntity.ok(ApiResponse.success(adminService.mapToPublicAdminResponse(admin)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    // ===== 新增管理員 =====
     @PostMapping
     public ResponseEntity<?> registerAdmin(@Valid @RequestBody AdminRegistrationRequest request) {
         try {
@@ -67,6 +103,7 @@ public class AdminController {
         }
     }
 
+    // ===== 更新管理員 =====
     @PutMapping("/{id}")
     public ResponseEntity<?> updateAdmin(@PathVariable Integer id,
             @Valid @RequestBody com.example.demo.admin.dto.AdminUpdateRequest request) {
@@ -79,17 +116,13 @@ public class AdminController {
         }
     }
 
+    // ===== 取得所有管理員 =====
     @GetMapping
     public ResponseEntity<?> getAllAdmins() {
         return ResponseEntity.ok(ApiResponse.success("Admins retrieved successfully", adminService.getAllAdmins()));
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<ApiResponse<AdminResponse>> getCurrentAdmin() {
-        AdminResponse response = adminService.getCurrentAdminResponse();
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
+    // ===== 忘記密碼 =====
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Void>> forgotPassword(
             @Valid @RequestBody com.example.demo.auth.dto.ForgotPasswordRequest request) {
@@ -97,6 +130,7 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Password reset email sent", null));
     }
 
+    // ===== 重設密碼 =====
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @Valid @RequestBody com.example.demo.auth.dto.ResetPasswordRequest request) {
@@ -107,25 +141,45 @@ public class AdminController {
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully", null));
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout() {
-        ResponseCookie jwtCookie = ResponseCookie.from("adminAccessToken", "")
+    // ===== 工具方法：設定管理員 HttpOnly Cookie =====
+    private void setCookies(HttpServletResponse response, String accessToken, String refreshToken) {
+        ResponseCookie accessCookie = ResponseCookie.from("adminAccessToken", accessToken)
+                .httpOnly(true)
+                .secure(false) // 生產環境改 true（HTTPS）
+                .path("/")
+                .maxAge(accessTokenExpirationMs / 1000)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+
+        ResponseCookie refreshCookie = ResponseCookie.from("adminRefreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false) // 生產環境改 true（HTTPS）
+                .path("/api/admins/refresh") // 僅 refresh 端點可讀取
+                .maxAge(refreshTokenExpirationMs / 1000)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+    }
+
+    // ===== 工具方法：清除管理員 Cookie =====
+    private void clearCookies(HttpServletResponse response) {
+        ResponseCookie clearAccess = ResponseCookie.from("adminAccessToken", "")
                 .httpOnly(true)
                 .secure(false)
                 .path("/")
                 .maxAge(0)
+                .sameSite("Lax")
                 .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, clearAccess.toString());
 
-        ResponseCookie refreshCookie = ResponseCookie.from("adminRefreshToken", "")
+        ResponseCookie clearRefresh = ResponseCookie.from("adminRefreshToken", "")
                 .httpOnly(true)
                 .secure(false)
-                .path("/")
+                .path("/api/admins/refresh")
                 .maxAge(0)
+                .sameSite("Lax")
                 .build();
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
-                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                .body(ApiResponse.success("Admin logout successful", null));
+        response.addHeader(HttpHeaders.SET_COOKIE, clearRefresh.toString());
     }
 }
