@@ -19,12 +19,29 @@ onMounted(async () => {
     const adminAuthStore = useAdminAuthStore();
     const cartStore = useCartStore()
     
-    if (authStore.isLoggedIn) {
-        await cartStore.fetchCart()
-        authStore.syncUserProfile();
+    const isFrontend = !window.location.pathname.startsWith('/admin');
+    const isAdminArea = window.location.pathname.startsWith('/admin');
+
+    if (localStorage.getItem('isUserLoggedIn') === 'true') {
+        await authStore.syncUserProfile();
+        if (authStore.isLoggedIn) {
+            await cartStore.fetchCart()
+        } else if (isFrontend && !window.location.hash) {
+            // 如果在前台刷新發現失效，給予逾期提示 (排除可能剛好在 router guard 打過的情況)
+            authStore.handleLogoutAndNotify('timeout').then(() => {
+                window.location.href = '/login';
+            });
+        }
     }
-    if (adminAuthStore.isLoggedIn) {
-        adminAuthStore.syncAdminProfile();
+    
+    if (localStorage.getItem('isAdminLoggedIn') === 'true') {
+        await adminAuthStore.syncAdminProfile();
+        if (!adminAuthStore.isLoggedIn && isAdminArea && !window.location.hash) {
+            // 如果在後台刷新發現失效，給予逾期提示
+            adminAuthStore.handleLogoutAndNotify('timeout').then(() => {
+                window.location.href = '/admin/login';
+            });
+        }
     }
 })
 // const route = useRoute();

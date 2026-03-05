@@ -8,7 +8,9 @@ import com.example.demo.common.dto.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +26,29 @@ public class AdminController {
     public ResponseEntity<?> login(@Valid @RequestBody AdminLoginRequest request) {
         try {
             AdminLoginResponse response = adminService.login(request);
-            return ResponseEntity.ok(ApiResponse.success("Admin login successful", response));
+
+            ResponseCookie jwtCookie = ResponseCookie.from("adminAccessToken", response.getAccessToken())
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(24 * 60 * 60)
+                    .build();
+
+            ResponseCookie refreshCookie = ResponseCookie.from("adminRefreshToken", response.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .build();
+
+            // Clear tokens from response body
+            response.setAccessToken(null);
+            response.setRefreshToken(null);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                    .body(ApiResponse.success("Admin login successful", response));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error(e.getMessage()));
@@ -81,5 +105,27 @@ public class AdminController {
         }
         adminPasswordResetService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully", null));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout() {
+        ResponseCookie jwtCookie = ResponseCookie.from("adminAccessToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("adminRefreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(ApiResponse.success("Admin logout successful", null));
     }
 }

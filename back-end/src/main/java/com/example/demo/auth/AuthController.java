@@ -13,7 +13,9 @@ import com.example.demo.user.dto.UserResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,28 +31,30 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
+        return addTokensToCookies(ResponseEntity.status(HttpStatus.CREATED), response)
                 .body(ApiResponse.success("User registered successfully", response));
     }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         AuthResponse response = authService.login(request);
-        return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+        return addTokensToCookies(ResponseEntity.ok(), response)
+                .body(ApiResponse.success("Login successful", response));
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<AuthResponse>> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
         AuthResponse response = authService.refreshToken(request.getRefreshToken());
-        return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", response));
+        return addTokensToCookies(ResponseEntity.ok(), response)
+                .body(ApiResponse.success("Token refreshed successfully", response));
     }
 
     @PostMapping("/oauth2/2fa-verify")
     public ResponseEntity<ApiResponse<AuthResponse>> oauth2Verify2FA(
             @Valid @RequestBody OAuth2TwoFactorRequest request) {
         AuthResponse response = authService.verifyOAuth2TwoFactor(request);
-        return ResponseEntity.ok(ApiResponse.success("OAuth2 Login successful", response));
+        return addTokensToCookies(ResponseEntity.ok(), response)
+                .body(ApiResponse.success("OAuth2 Login successful", response));
     }
 
     @GetMapping("/me")
@@ -80,5 +84,58 @@ public class AuthController {
 
         passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully", null));
+    }
+
+    /**
+     * 登出 - 清除 Cookie
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout() {
+        ResponseCookie jwtCookie = ResponseCookie.from("accessToken", "")
+                .httpOnly(true)
+                .secure(false) // in production use true
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(ApiResponse.success("Logout successful", null));
+    }
+
+    private ResponseEntity.BodyBuilder addTokensToCookies(ResponseEntity.BodyBuilder builder, AuthResponse response) {
+        if (response.getAccessToken() != null) {
+            ResponseCookie jwtCookie = ResponseCookie.from("accessToken", response.getAccessToken())
+                    .httpOnly(true)
+                    .secure(false) // in production use true
+                    .path("/")
+                    .maxAge(24 * 60 * 60)
+                    .build();
+            builder.header(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        }
+
+        if (response.getRefreshToken() != null) {
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", response.getRefreshToken())
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(7 * 24 * 60 * 60)
+                    .build();
+            builder.header(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        }
+
+        // 為了安全，將 Token 從 Response Body 中移除
+        response.setAccessToken(null);
+        response.setRefreshToken(null);
+
+        return builder;
     }
 }

@@ -1,43 +1,41 @@
 import { defineStore } from 'pinia'
-import { isTokenExpired } from '@/utils/jwt'
 import api from '@/api/config'
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: JSON.parse(localStorage.getItem('user')) || null,
-        token: localStorage.getItem('accessToken') || null,
+        // 不再從 localStorage 讀取 user 的詳細資料與 token
+        user: null,
     }),
 
     getters: {
-        isLoggedIn: (state) => !!state.token && !isTokenExpired(state.token),
-        isExpired: (state) => !!state.token && isTokenExpired(state.token),
+        // 判斷是否登入：依據記憶體中是否有 user 物件
+        isLoggedIn: (state) => !!state.user,
         userName: (state) => state.user ? state.user.name : '',
     },
 
     actions: {
-        login(userData, token, refreshToken) {
+        login(userData) {
             this.user = userData;
-            this.token = token;
-            localStorage.setItem('user', JSON.stringify(userData));
-            localStorage.setItem('accessToken', token);
-            localStorage.setItem('refreshToken', refreshToken);
+            // 設立一個安全的不帶敏感資訊的 flag 讓重新整理時知道要抓資料
+            localStorage.setItem('isUserLoggedIn', 'true');
         },
-        logout() {
+        async logout() {
+            try {
+                await api.post('/auth/logout');
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+            this.logoutLocally();
+        },
+        // 僅清除前端狀態
+        logoutLocally() {
             this.user = null;
-            this.token = null;
-            localStorage.removeItem('user');
-            localStorage.removeItem('accessToken');
-            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('isUserLoggedIn');
         },
         updateUser(userData) {
             this.user = { ...this.user, ...userData };
-            localStorage.setItem('user', JSON.stringify(this.user));
         },
         checkAuth() {
-            if (this.isExpired) {
-                this.logout();
-                return false;
-            }
             return this.isLoggedIn;
         },
         /**
@@ -45,9 +43,9 @@ export const useAuthStore = defineStore('auth', {
          * @param {string} type - 'timeout' (逾時) 或 'unauthorized' (未登入)
          */
         async handleLogoutAndNotify(type = 'timeout') {
-            this.logout();
+            this.logoutLocally();
             const config = type === 'timeout'
-                ? { title: '登入已逾時', text: '您的登入工作階段已到期，請重新登入' }
+                ? { title: '登入逾期', text: '您的登入工作階段已到期，請重新登入' }
                 : { title: '請先登入', text: '此頁面需要登入後才能訪問' };
 
             const Swal = (await import('sweetalert2')).default;
@@ -61,7 +59,6 @@ export const useAuthStore = defineStore('auth', {
             // 由於 store 無法直接存取 router，這部分留給呼叫端處理跳轉，或從外部傳入 router
         },
         async syncUserProfile() {
-            if (!this.checkAuth()) return;
 
             try {
                 const response = await api.get('/auth/me');
@@ -75,16 +72,9 @@ export const useAuthStore = defineStore('auth', {
                 console.error('同步使用者資料失敗:', error);
 
                 if (error.response && [401, 403].includes(error.response.status)) {
-                    this.logout();
-
-                    const Swal = (await import('sweetalert2')).default;
-                    Swal.fire({
-                        icon: 'warning',
-                        title: '登入狀態失效',
-                        text: '您的帳號狀態已變更或驗證過期，請重新登入。'
-                    }).then(() => {
-                        window.location.href = '/login';
-                    });
+                    // 如果 token 不合法或已過期，單純把前端狀態清掉即可，不要彈出 SweetAlert
+                    // 讓 Vue Router 或當前畫面的 API 來決定是否需要踢回登入頁，避免干擾 Admin 畫面
+                    this.logoutLocally();
                 }
             }
         }

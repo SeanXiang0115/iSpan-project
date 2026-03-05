@@ -326,22 +326,15 @@ router.beforeEach(async (to, from, next) => {
 
 
   if (to.meta.requiresAdminAuth) {
-    // [直接檢查 Local Storage 的方式]
-    // 說明：若希望連「手動刪除 Local Storage」時，也能在切換頁面瞬間立刻攔截，可取消以下註解
-    // const localAdminToken = localStorage.getItem('adminAccessToken');
-    // if (!localAdminToken) {
-    //   await adminAuthStore.handleLogoutAndNotify('unauthorized');
-    //   return next('/admin/login');
-    // }
-
-    // Check if token is expired, useAdminAuthStore.isExpired will be implemented next
-    if (adminAuthStore.isExpired) {
-      await adminAuthStore.handleLogoutAndNotify('timeout');
-      return next('/admin/login');
+    // 由於現在改用 HttpOnly Cookie，F5 重新整理時 store 是空的。
+    // 如果 localstorage 標記為已登入，我們必須在路由跳轉前先等待同步完成。
+    let wasAdminLoggedIn = localStorage.getItem('isAdminLoggedIn') === 'true';
+    if (!adminAuthStore.isLoggedIn && wasAdminLoggedIn) {
+      await adminAuthStore.syncAdminProfile();
     }
 
     if (!adminAuthStore.isLoggedIn) {
-      await adminAuthStore.handleLogoutAndNotify('unauthorized');
+      await adminAuthStore.handleLogoutAndNotify(wasAdminLoggedIn ? 'timeout' : 'unauthorized');
       return next('/admin/login');
     }
 
@@ -387,13 +380,14 @@ router.beforeEach(async (to, from, next) => {
 
 
   if (to.meta.requiresAuth) {
-    if (authStore.isExpired) {
-      await authStore.handleLogoutAndNotify('timeout');
-      return next('/login');
+    // 同理，等待一般使用者狀態同步
+    let wasUserLoggedIn = localStorage.getItem('isUserLoggedIn') === 'true';
+    if (!authStore.isLoggedIn && wasUserLoggedIn) {
+      await authStore.syncUserProfile();
     }
 
     if (!authStore.isLoggedIn) {
-      await authStore.handleLogoutAndNotify('unauthorized');
+      await authStore.handleLogoutAndNotify(wasUserLoggedIn ? 'timeout' : 'unauthorized');
       return next('/login');
     }
   }

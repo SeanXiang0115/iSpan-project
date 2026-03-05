@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         // 放行管理員登入與相關基礎功能
                         .requestMatchers("/api/admins/login").permitAll()
+                        .requestMatchers("/api/admins/logout").permitAll()
                         .requestMatchers("/api/admins/forgot-password").permitAll()
                         .requestMatchers("/api/admins/reset-password").permitAll()
                         // TODO: 測試完成後，移除此行恢復強制登入檢查
@@ -93,7 +94,8 @@ public class SecurityConfig {
                         // 商家資訊端點：允許公開查看特定商家資訊
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/owner/store/{id}").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/config/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available-slots").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available-slots")
+                        .permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,
