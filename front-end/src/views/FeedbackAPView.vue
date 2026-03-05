@@ -40,6 +40,11 @@ const loadFeedbacks = async (page = 0) => {
     isLoading.value = true;
     try {
         const data = await getFeedbackList(filterStatus.value || null, page);
+
+        // --- 這裡加入 Log 檢查 ---
+        console.log("API 回傳原始資料:", data);
+        console.log("Content 陣列長度:", data.content ? data.content.length : '無內容');
+
         feedbackList.value = data.content;
         totalPages.value   = data.totalPages;
         currentPage.value  = data.number;
@@ -150,7 +155,7 @@ const formatDate = (dateStr) => {
         </div>
 
         <!-- Data Table -->
-        <div class="admin-card overflow-hidden">
+        <div class="admin-card">
             <div class="table-responsive" style="overflow-x: auto;">
                 <table class="admin-table table table-hover mb-0 align-middle" style="min-width: 900px;">
                     <thead>
