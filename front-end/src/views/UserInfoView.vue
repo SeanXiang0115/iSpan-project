@@ -111,9 +111,15 @@ onUnmounted(() => {
   overflow-x: hidden;
 }
 
+.main-content {
+  flex-grow: 1;
+  min-width: 0; /* 防止子元素撐開容器 */
+}
+
 // Sidebar Styles
 .sidebar-custom {
   width: 280px;
+  flex-shrink: 0;
   background-color: #2c2c2c;
   color: white;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -126,6 +132,7 @@ onUnmounted(() => {
 
   &.collapsed {
     width: 80px;
+    flex-shrink: 0;
 
     .sidebar-header {
       justify-content: center;
@@ -237,6 +244,7 @@ onUnmounted(() => {
   .main-content {
     margin-left: 0 !important;
     padding-top: 4rem; // Reserve space for mobile toggle
+    min-width: 0;
   }
 }
 
