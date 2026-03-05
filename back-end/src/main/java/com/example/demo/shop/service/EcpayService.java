@@ -14,12 +14,12 @@ public class EcpayService {
 
     private static final String MERCHANT_ID = "3002607";
     private static final String HASH_KEY = "pwFHCqoQZGmho4w6";
-    private static final String HASH_IV = "EkRm7uy3DiqpYwyQ";
+    private static final String HASH_IV = "EkRm7iFT261dpevs";
     private static final String ECPAY_URL = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5";
     private static final String NGROK_URL = "https://shily-untusked-yuri.ngrok-free.dev";
 
-    public String generatePaymentForm(Integer orderId, int totalAmount, String itemName) {
-        String merchantTradeNo = "ORD" + orderId + System.currentTimeMillis() % 10000;
+    public String generatePaymentForm(Integer orderId, int finalTotalPrice, String itemName) {
+        String merchantTradeNo = "ORD" +  + System.currentTimeMillis() ;
         String merchantTradeDate = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss"));
 
@@ -28,12 +28,12 @@ public class EcpayService {
         params.put("MerchantTradeNo", merchantTradeNo);
         params.put("MerchantTradeDate", merchantTradeDate);
         params.put("PaymentType", "aio");
-        params.put("TotalAmount", String.valueOf(totalAmount));
-        params.put("TradeDesc", "購物訂單");
-        params.put("ItemName", itemName);
+        params.put("TotalAmount", String.valueOf(finalTotalPrice));
+        params.put("TradeDesc", "Shopping");
+        params.put("ItemName", "Order" + orderId);
         params.put("ReturnURL", NGROK_URL + "/api/ecpay/return");
-        params.put("ClientBackURL", "http://localhost:5173/shopStore");
-        params.put("OrderResultURL", "http://localhost:5173/shopStore");
+        params.put("ClientBackURL", "http://localhost:5173/payment-result");
+        params.put("OrderResultURL", NGROK_URL + "/api/ecpay/result");
         params.put("ChoosePayment", "ALL");
         params.put("EncryptType", "1");
 
@@ -48,31 +48,66 @@ public class EcpayService {
                 .append("' value='").append(entry.getValue()).append("'/>");
         }
         form.append("</form>");
-        form.append("<script>document.getElementById('ecpayForm').submit();</script>");
 
-        return form.toString();
+        return form.toString(); 
+
     }
 
     private String generateCheckMac(TreeMap<String, String> params) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("HashKey=").append(HASH_KEY);
-        for (var entry : params.entrySet()) {
-            sb.append("&").append(entry.getKey()).append("=").append(entry.getValue());
-        }
-        sb.append("&HashIV=").append(HASH_IV);
+        try {
+            // 步驟1: 組合字串
+            StringBuilder sb = new StringBuilder();
+            sb.append("HashKey=").append(HASH_KEY);
+            for (var entry : params.entrySet()) {
+                sb.append("&").append(entry.getKey()).append("=").append(entry.getValue());
+            }
+            sb.append("&HashIV=").append(HASH_IV);
 
-        String encoded = urlEncodeToLower(sb.toString());
-        return DigestUtils.sha256Hex(encoded).toUpperCase();
+            // 步驟2: URLEncode
+            String encoded = URLEncoder.encode(sb.toString(), "UTF-8");
+            
+            // 步驟3: 轉小寫
+            encoded = encoded.toLowerCase();
+            
+            // 步驟4: 依綠界規範替換字元
+            encoded = encoded.replace("%2d", "-");
+            encoded = encoded.replace("%5f", "_");
+            encoded = encoded.replace("%2e", ".");
+            encoded = encoded.replace("%21", "!");
+            encoded = encoded.replace("%2a", "*");
+            encoded = encoded.replace("%28", "(");
+            encoded = encoded.replace("%29", ")");
+
+            System.out.println("加密前字串：" + encoded);
+
+            // 步驟5: SHA256 轉大寫
+            return DigestUtils.sha256Hex(encoded).toUpperCase();
+            
+        } catch (Exception e) {
+            throw new RuntimeException("CheckMac 產生失敗", e);
+        }
     }
 
     private String urlEncodeToLower(String str) {
         try {
-            return URLEncoder.encode(str, StandardCharsets.UTF_8)
-                    .toLowerCase()
-                    .replace("%2b", "+")
-                    .replace("%20", "+");
+            String encoded = URLEncoder.encode(str, StandardCharsets.UTF_8);
+        
+            // 轉小寫
+            encoded = encoded.toLowerCase();
+            
+            // 依照綠界規範替換回來
+            encoded = encoded.replace("%2d", "-");
+            encoded = encoded.replace("%5f", "_");
+            encoded = encoded.replace("%2e", ".");
+            encoded = encoded.replace("%21", "!");
+            encoded = encoded.replace("%2a", "*");
+            encoded = encoded.replace("%28", "(");
+            encoded = encoded.replace("%29", ")");
+            
+            return encoded;
         } catch (Exception e) {
             throw new RuntimeException("URL encode 失敗", e);
         }
+
     }
 }

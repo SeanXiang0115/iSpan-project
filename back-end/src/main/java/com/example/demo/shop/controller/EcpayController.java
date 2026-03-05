@@ -33,13 +33,16 @@ public class EcpayController {
         Orders order = ordersRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("找不到訂單"));
 
-        // 取得訂單商品名稱（這裡簡化用訂單ID）
-        String itemName = "訂單 ORD-" + orderId;
+        String itemName = "Order" + orderId;
         int totalAmount = order.getTotalPrice().intValue();
 
         String form = ecpayService.generatePaymentForm(orderId, totalAmount, itemName);
-        return ResponseEntity.ok(form);
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(form);
     }
+
 
     // 綠界付款完成後回傳（ReturnURL）
     @PostMapping("/return")
@@ -55,5 +58,33 @@ public class EcpayController {
         }
 
         return ResponseEntity.ok("1|OK"); // 綠界要求回傳 1|OK
+    }
+
+    @CrossOrigin(origins = "*")
+    @PostMapping("/result")  // ← 改這行
+    public ResponseEntity<String> result(@RequestParam Map<String, String> params) {
+        System.out.println("綠界回傳參數：" + params);  // ← 加這行
+
+        String rtnCode = params.get("RtnCode");
+
+        String merchantTradeNo = params.getOrDefault("MerchantTradeNo", "");
+        
+        String redirectUrl;
+        if ("1".equals(rtnCode)) {
+        redirectUrl = "http://localhost:5173/payment-result?status=success" +
+                "&tradeNo=" + merchantTradeNo +
+                "&amount=" + params.getOrDefault("TradeAmt", "") +
+                "&paymentDate=" + params.getOrDefault("PaymentDate", "").replace(" ", "+");
+        } else {
+            redirectUrl = "http://localhost:5173/payment-result?status=fail";
+        }
+        
+        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'>" +
+                    "<meta http-equiv='refresh' content='0;url=" + redirectUrl + "'>" +
+                    "</head><body></body></html>";
+        
+        return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(html);
     }
 }

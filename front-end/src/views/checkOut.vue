@@ -104,7 +104,7 @@ const handleCheckout = async () => {
     // 這裡模擬送出訂單
     const result = await Swal.fire({
         title: '確認送出訂單？',
-        text: `總金額為 NT$ ${cartStore.totalPrice}`,
+        text: `總金額為 NT$ ${cartStore.totalPrice + shippingFee.value}`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: '確定下單',
@@ -113,8 +113,7 @@ const handleCheckout = async () => {
     
     
     if (result.isConfirmed) {
-
-        try{
+        try {
             const response = await api.post('/orders/checkout', {
                 name: orderForm.value.name,
                 phone: orderForm.value.phone,
@@ -123,11 +122,12 @@ const handleCheckout = async () => {
                 street: orderForm.value.street,
                 deliveryMethod: orderForm.value.deliveryMethod,
                 paymentMethod: orderForm.value.paymentMethod,
-                note: orderForm.value.note
+                note: orderForm.value.note,
+                shippingFee: shippingFee.value
             })
 
             orderDepot.addOrder({
-                customer:{...orderForm.value},
+                customer: {...orderForm.value},
                 totalPrice: cartStore.totalPrice,
                 status: currentStatus,
                 items: cartStore.items.map(item => ({
@@ -136,33 +136,57 @@ const handleCheckout = async () => {
                     price: item.price,
                     quantity: item.quantity
                 })),
-
             })
 
-            console.log('目前的訂單總數：', orderDepot.orders.length); // 這裡應該會顯示 1 以上
+            console.log('目前的訂單總數：', orderDepot.orders.length)
 
-            await cartStore.fetchCart();
+            await cartStore.fetchCart()
 
-            await Swal.fire({
-                icon: 'success',
-                title: '成功',
-                text: `訂單已建立！狀態為：${currentStatus}`,
-                footer: `<p style="font-weight: bold; font-size: 16px; color: 198754;">訂單編號為: ${orderNumber}</p>`
-            })
+            // 判斷付款方式
+            if (orderForm.value.paymentMethod === 'credit_card') {
+                // 信用卡 → 詢問是否前往綠界付款
+                const payResult = await Swal.fire({
+                    icon: 'success',
+                    title: '訂單建立成功！',
+                    html: `狀態：${currentStatus}<br>訂單編號：${orderNumber}`,
+                    showCancelButton: true,
+                    confirmButtonText: '前往付款',
+                    cancelButtonText: '稍後再付'
+                })
+                
+                if (payResult.isConfirmed) {
+                    // 從後端拿到參數
+                    const payResponse = await api.get(`/ecpay/pay/${response.orderId}`)
+                    
+                    // 動態建立 form 並 submit
+                    const div = document.createElement('div')
+                    div.innerHTML = payResponse
+                    const form = div.querySelector('form')
+                    document.body.appendChild(form)
+                    form.submit()
+                }
+                // } else {
+                    
+                //     router.push('/shopStore')
+                // }
 
-            router.push('/shopStore')
+            } else {
+                // 貨到付款 → 直接顯示成功
+                await Swal.fire({
+                    icon: 'success',
+                    title: '成功',
+                    text: `訂單已建立！狀態為：${currentStatus}`,
+                    footer: `<p style="font-weight: bold; font-size: 16px; color: 198754;">訂單編號為: ${orderNumber}</p>`
+                })
+                router.push('/shopStore')
+            }
+
         } catch (error) {
-            Swal.fire('錯誤',error.response?.data?.error || '結帳失敗', 'error')
+            Swal.fire('錯誤', error.response?.data?.error || '結帳失敗', 'error')
         }
-
-
     }
-    
-    
+
 }
-
-//增加檢核e-mail
-
 </script>
 
 <template>

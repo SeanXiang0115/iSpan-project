@@ -60,7 +60,10 @@ public class OrderService {
             .map(item -> item.getProduct().getPrice()
                 .multiply(new BigDecimal(item.getQuantity())))
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        order.setTotalPrice(totalPrice);
+
+        BigDecimal shipping = new BigDecimal(dto.getShippingFee() != null ? dto.getShippingFee() : 0);
+            totalPrice = totalPrice.add(shipping);
+            order.setTotalPrice(totalPrice);
 
         Orders savedOrder = ordersRepository.save(order);
 

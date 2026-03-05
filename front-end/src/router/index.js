@@ -145,6 +145,11 @@ const routes = [
         name: 'Test',
         component: () => import('@/views/TestView.vue')
       },
+      {
+        path: '/payment-result',
+        component: () => import('@/views/PaymentResult.vue'),
+        name: 'PaymentResult'
+      }
     ]
   },
 

@@ -12,4 +12,5 @@ public class CheckoutRequestDTO {
     private String deliveryMethod;
     private String paymentMethod;
     private String note;
+    private Integer shippingFee;
 }
