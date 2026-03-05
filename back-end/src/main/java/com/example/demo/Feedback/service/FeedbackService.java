@@ -1,18 +1,22 @@
 package com.example.demo.Feedback.service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.Feedback.dto.FeedbackListDto;
 import com.example.demo.Feedback.dto.FeedbackRequestDto;
 import com.example.demo.Feedback.entity.Feedback;
 import com.example.demo.Feedback.entity.FeedbackTypes;
 import com.example.demo.Feedback.repository.FeedbackRepository;
 import com.example.demo.Feedback.repository.FeedbackStatusRepository;
 import com.example.demo.Feedback.repository.FeedbackTypesRepository;
+import com.example.demo.user.User;
 import com.example.demo.user.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -62,4 +66,26 @@ public class FeedbackService {
     public List<FeedbackTypes> getAllTypes() {
         return feedbackTypesRepo.findAll();
     }
+
+    public List<FeedbackListDto> getFeedbacksByEmail(String email) {
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("找不到該使用者"));
+
+        List<Feedback> feedbacks = feedbackRepo.findByUserOrderByCreatedAtDesc(user);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+
+        return feedbacks.stream().map(f -> {
+            FeedbackListDto dto = new FeedbackListDto();
+            dto.setStatus(f.getFeedbackStatus() != null ? f.getFeedbackStatus().getStatusName() : "處理中");
+            dto.setCreatedAt(f.getCreatedAt().format(formatter));
+            // 帶上類別名稱
+            dto.setTypeName(f.getFeedbackTypes() != null ? f.getFeedbackTypes().getTypeName() : "一般");
+            // 帶上「完整」內容
+            dto.setFullContents(f.getContents());
+            dto.setReply(f.getReply() != null ? f.getReply() : "尚未回覆");
+            dto.setRepliedAt(f.getRepliedAt() != null ? f.getRepliedAt().format(formatter) : "-");
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
 }
