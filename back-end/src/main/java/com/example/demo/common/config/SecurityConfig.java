@@ -2,7 +2,7 @@ package com.example.demo.common.config;
 
 import java.util.Arrays;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -76,6 +76,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admins/**").hasRole("ADMIN")
                         // 允許訪問店鋪註冊端點
                         .requestMatchers("/api/store-registrations/**").permitAll()
+                        // 放行綠界相關 API（付款、回傳等）
+                        .requestMatchers("/api/ecpay/**").permitAll()
                         // OAuth2 登入端點
                         .requestMatchers("/api/products/**").permitAll()
                         // 放行電商商品相關API
@@ -95,15 +97,17 @@ public class SecurityConfig {
                         // 商家資訊端點：允許公開查看特定商家資訊
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/owner/store/{id}").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/config/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available-slots")
-                        .permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available-slots").permitAll()
+                        .requestMatchers("/api/orders/**").permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,
                         // "/api/users/*/store-status").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.DELETE, "/api/users/*").hasRole("ADMIN")
                         // 其他請求需要認證
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                        
+                    )
                 // 處理 /api/** 的未授權請求直接回傳 401 而非重新導向 OAuth2 登入頁
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -132,7 +136,12 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration
-                .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173"));
+                .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173",
+                "https://shily-untusked-yuri.ngrok-free.dev",
+                "https://payment-stage.ecpay.com.tw",  
+                "https://payment.ecpay.com.tw"
+                    
+                ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));

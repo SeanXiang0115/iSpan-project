@@ -11,6 +11,7 @@ export default defineConfig({
     vueDevTools(),
   ],
   server: {
+    historyApiFallback: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8080', // 後端專案的網址與端口

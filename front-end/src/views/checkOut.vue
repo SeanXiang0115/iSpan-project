@@ -5,6 +5,7 @@ import { ref, computed, onMounted  } from 'vue'
 import Swal from 'sweetalert2'
 import { useOrderDepot } from '@/stores/orderDepot.js'
 import TwCitySelector from 'tw-city-selector'
+import api from '@/api/config'
 
 const cartStore = useCartStore()
 const router = useRouter()
@@ -22,30 +23,29 @@ const orderForm = ref({
     zipcode: '',   // 郵遞區號
     street: '',    // 路段手輸
     deliveryMethod: 'home',
-    paymentMethod: 'credit_card', 
+    paymentMethod: 'ECpay', 
     note: ''
 })
 
-onMounted(  () => {
-    
-        new TwCitySelector({
+onMounted(() => {
+    new TwCitySelector({
         el: '#twzipcode',
         elCounty: '.county',
-        elDistrict: '.district', // 區域 select 的 class
-        elZipcode: '.zipcode', // 郵遞區號 input 的 class
+        elDistrict: '.district',
+        elZipcode: '.zipcode',
         onCountyChange: (val) => { orderForm.value.city = val },
         onDistrictChange: (val) => { orderForm.value.district = val },
         onZipcodeChange: (val) => { orderForm.value.zipcode = val }
-        });
+    });
 
+    setTimeout(() => {
+        const countyEl = document.querySelector('#twzipcode .county')
+        const districtEl = document.querySelector('#twzipcode .district')
+        const zipcodeEl = document.querySelector('#twzipcode .zipcode')
         
-
-        setTimeout(() => {
-        console.log('twzipcode el:', document.querySelector('#twzipcode'))
-        console.log('county el:', document.querySelector('#twzipcode .county'))
-        console.log('county value:', document.querySelector('#twzipcode .county')?.value)
-        console.log('district value:', document.querySelector('#twzipcode .district')?.value)
-        console.log('zipcode value:', document.querySelector('#twzipcode .zipcode')?.value)
+        if (countyEl?.value) orderForm.value.city = countyEl.value
+        if (districtEl?.value) orderForm.value.district = districtEl.value
+        if (zipcodeEl?.value) orderForm.value.zipcode = zipcodeEl.value
     }, 500)
 })
 
@@ -67,12 +67,16 @@ const isValidEmail = (email) => {
 const handleCheckout = async () => {
     console.log('表單內容：', orderForm.value) 
     // 簡單表單驗證
+    
+
     if (!orderForm.value.name || !orderForm.value.phone ||  !orderForm.value.street) {
         Swal.fire('錯誤', '請填寫完整的收件人資訊', 'error')
         return
     }
 
-    if (orderForm.email && !isValidEmail(orderForm.email)) {
+    
+
+    if (orderForm.value.email && !isValidEmail(orderForm.value.email)) {
         Swal.fire('錯誤', 'Email 格式有誤', 'error');
         return;
     }
@@ -88,7 +92,7 @@ const handleCheckout = async () => {
 
     //建立訂單狀態為待付款、已付款、出貨中、已完成
     const getOrderStatus = () =>{
-        if(orderForm.value.paymentMethod === 'credit_card') {
+        if(orderForm.value.paymentMethod === 'ECpay') {
             return '待付款'
         } else if (orderForm.value.paymentMethod === 'cod') {
             return '待出貨'
@@ -101,19 +105,32 @@ const handleCheckout = async () => {
 
 
     // 這裡模擬送出訂單
-    Swal.fire({
+    const result = await Swal.fire({
         title: '確認送出訂單？',
-        text: `總金額為 NT$ ${cartStore.totalPrice}`,
+        text: `總金額為 NT$ ${cartStore.totalPrice + shippingFee.value}`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: '確定下單',
         cancelButtonText: '再檢查一下'
-    }).then((result) => {
-        if (result.isConfirmed ) {
-            // 💡 之後串綠界時，這裡會呼叫後端 API 取得綠界的導向表單
-            
+    })
+    
+    
+    if (result.isConfirmed) {
+        try {
+            const response = await api.post('/orders/checkout', {
+                name: orderForm.value.name,
+                phone: orderForm.value.phone,
+                city: orderForm.value.city,
+                district: orderForm.value.district,
+                street: orderForm.value.street,
+                deliveryMethod: orderForm.value.deliveryMethod,
+                paymentMethod: orderForm.value.paymentMethod,
+                note: orderForm.value.note,
+                shippingFee: shippingFee.value
+            })
+
             orderDepot.addOrder({
-                customer:{...orderForm.value},
+                customer: {...orderForm.value},
                 totalPrice: cartStore.totalPrice,
                 status: currentStatus,
                 items: cartStore.items.map(item => ({
@@ -122,33 +139,58 @@ const handleCheckout = async () => {
                     price: item.price,
                     quantity: item.quantity
                 })),
-
             })
 
-            console.log('目前的訂單總數：', orderDepot.orders.length); // 這裡應該會顯示 1 以上
+            console.log('目前的訂單總數：', orderDepot.orders.length)
 
-            cartStore.clearCart();
+            await cartStore.fetchCart()
 
-            Swal.fire({
-                icon: 'success',
-                title: '成功',
-                text: `訂單已建立！狀態為：${currentStatus}`,
-                footer: `<p style="font-weight: bold; font-size: 16px; color: 198754;">訂單編號為: ${orderNumber}</p>`
-            })
+            // 判斷付款方式
+            if (orderForm.value.paymentMethod === 'ECpay') {
+                // 信用卡 → 詢問是否前往綠界付款
+                const payResult = await Swal.fire({
+                    icon: 'success',
+                    title: '訂單建立成功！',
+                    html: `狀態：${currentStatus}<br>訂單編號：${orderNumber}`,
+                    showCancelButton: true,
+                    confirmButtonText: '前往付款',
+                    cancelButtonText: '稍後再付'
+                })
+                
+                if (payResult.isConfirmed) {
+                    // 從後端拿到參數
+                    const payResponse = await api.get(`/ecpay/pay/${response.orderId}`)
+                    
+                    // 動態建立 form 並 submit
+                    const div = document.createElement('div')
+                    div.innerHTML = payResponse
+                    const form = div.querySelector('form')
+                    document.body.appendChild(form)
+                    form.submit()
+                }
+                // } else {
+                    
+                //     router.push('/shopStore')
+                // }
 
-            router.push('/shopStore')
-            // 測試用：清空購物車並導回首頁
-            // cartStore.items = []
-            // cartStore.saveToStorage()
-            // router.push('/shopStore')
+            } else {
+                // 貨到付款 → 直接顯示成功
+                await Swal.fire({
+                    icon: 'success',
+                    title: '成功',
+                    text: `訂單已建立！狀態為：${currentStatus}`,
+                    footer: `<p style="font-weight: bold; font-size: 16px; color: 198754;">訂單編號為: ${orderNumber}</p>`
+                })
+                router.push('/shopStore')
+            }
 
+        } catch (error) {
+            Swal.fire('錯誤', error.response?.data?.error || '結帳失敗', 'error')
         }
-        
-    })
+    }
+console.log('city:', orderForm.value.city, 'district:', orderForm.value.district)
+
 }
-
-//增加檢核e-mail
-
 </script>
 
 <template>
@@ -221,9 +263,9 @@ const handleCheckout = async () => {
                     <div class="card-body">
                         <div class="payment-options">
                             <label class="payment-radio">
-                                <input type="radio" v-model="orderForm.paymentMethod" value="credit_card">
+                                <input type="radio" v-model="orderForm.paymentMethod" value="ECpay">
                                 <span class="radio-label">
-                                    <i class="bi bi-credit-card"></i> 信用卡 (支援綠界支付)
+                                    <i class="bi bi-ECpay"></i> 線上付款
                                 </span>
                             </label>
                             <label class="payment-radio">
