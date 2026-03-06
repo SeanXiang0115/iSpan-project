@@ -47,7 +47,8 @@ function doRefresh(isAdminContext) {
 
     // 如果剛成功 refresh 過（cooldown 期間），直接 resolve（Cookie 已更新）
     if (now - state.timestamp < REFRESH_COOLDOWN_MS) {
-        console.log('[REFRESH] 在冷卻期內，跳過重複 refresh');
+        const elapsed = ((now - state.timestamp) / 1000).toFixed(1);
+        console.log(`[REFRESH] 在冷卻期內（${elapsed}s 前剛換發過），跳過重複 refresh`);
         return Promise.resolve();
     }
 
@@ -68,10 +69,32 @@ function doRefresh(isAdminContext) {
     return state.promise;
 }
 
+// 設定 Context Hint 的邏輯
+const addContextHint = (config) => {
+    if (config.url?.startsWith('/admins')) {
+        config.headers['X-Context-Hint'] = 'ADMIN';
+    } else if (config.url?.startsWith('/auth')) {
+        config.headers['X-Context-Hint'] = 'USER';
+    } else {
+        const isAdminPage = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+        config.headers['X-Context-Hint'] = isAdminPage ? 'ADMIN' : 'USER';
+    }
+    return config;
+};
+
 // ===== Request Interceptor =====
 api.interceptors.request.use(
     (config) => {
-        console.log(`[API REQ] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+        addContextHint(config);
+        console.log(`[API REQ] ${config.method?.toUpperCase()} ${config.baseURL}${config.url} (Context: ${config.headers['X-Context-Hint']})`);
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+rawApi.interceptors.request.use(
+    (config) => {
+        addContextHint(config);
         return config;
     },
     (error) => Promise.reject(error)
@@ -124,19 +147,19 @@ const createMethodWrapper = (methodName) => {
 
             try {
                 // 啟動或共用 Refresh 動作
+                console.log(`[REFRESH-WRAPPER] 準備 refresh，觸發來源 URL: ${url}`);
                 await doRefresh(isAdminContext);
 
-                console.warn(`[REFRESH-WRAPPER] Cookie 更新成功，準備用 ${methodName.toUpperCase()} 重新發送請求`);
-
-                // 完全用外殼重發一次 API 請求！這裡的 Promise 絕對純淨無瑕！
-                // 為了防呆，我們使用 api.request 再把原本的 config 傳進去
                 const retryConfig = { ...error.config };
                 delete retryConfig.adapter;
                 delete retryConfig.transformRequest;
                 delete retryConfig.transformResponse;
 
+                console.log(`[REFRESH-WRAPPER] 重送 ${methodName.toUpperCase()} ${url}`);
                 const finalResult = await api.request(retryConfig);
-                console.warn('[REFRESH-WRAPPER] 重發成功！拿到的最終資料鍵值:', Object.keys(finalResult || {}));
+
+                const resultType = finalResult && typeof finalResult === 'object' ? Object.keys(finalResult) : finalResult;
+                console.log(`[REFRESH-WRAPPER] 重送成功，拿到 keys:`, resultType);
 
                 return finalResult;
             } catch (refreshError) {
