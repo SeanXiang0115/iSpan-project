@@ -148,15 +148,22 @@ public class StoreOperationService extends StoreBaseService {
                 OffDay od = new OffDay();
                 od.setStore(store);
 
-                // 處理特定店休(特定日期)
+                // 處理特定店休(特定日期) 並增加日期檢查
                 if (odDto.getOffDate() != null && !odDto.getOffDate().isEmpty()) {
-                    od.setOffDate(LocalDate.parse(odDto.getOffDate()));
+                    LocalDate inputDate = LocalDate.parse(odDto.getOffDate());
+
+                    // 阻擋設定日期為當日(含)以前
+                    // .isAfter(LocalDate.now()) 代表必須是明天以後
+                    if (!inputDate.isAfter(LocalDate.now())) {
+                        throw new IllegalArgumentException("店休日期設定錯誤：特定日期店休僅能設定明日以後的日期 (" + odDto.getOffDate() + ")");
+                    }
+                    od.setOffDate(inputDate);
                 }
 
-                // 處理固定店休(星期幾)
+                // 處理每周固定店休(星期幾)
                 od.setDayOfWeek(odDto.getDayOfWeek());
 
-                // 處理特定時段店休(例如：12:00-13:00)
+                // 處理每天固定時段店休
                 if (odDto.getStartTime() != null && !odDto.getStartTime().isEmpty()) {
                     od.setStartTime(LocalTime.parse(odDto.getStartTime()));
                 }
@@ -177,4 +184,5 @@ public class StoreOperationService extends StoreBaseService {
         }
 
     }
+
 }
