@@ -15,11 +15,6 @@ const routes = [
         component: () => import('@/views/HomeView.vue'),
       },
       {
-        path: 'bookings',
-        name: 'UserBookingsTab',
-        component: () => import('@/views/UserBookingsView.vue')
-      },
-      {
         path: 'login',
         name: 'Login',
         component: () => import('@/views/LoginView.vue'),
@@ -40,8 +35,7 @@ const routes = [
           {
             path: 'bookings',
             name: 'UserBookingsTab',
-            component: () => import('@/views/UserInfoContent.vue'),
-            props: { title: '我的訂位' }
+            component: () => import('@/views/UserBookingsView.vue')
           },
           {
             path: 'orders',
@@ -53,6 +47,11 @@ const routes = [
             path: 'store-registration',
             name: 'UserInfoStoreReg',
             component: () => import('@/views/UserInfoStoreReg.vue')
+          },
+          {
+            path: 'feedback',
+            name: 'UserInfoFeedback',
+            component: () => import('@/views/UserInfoFeedback.vue')
           }
         ]
       },
@@ -145,6 +144,11 @@ const routes = [
         name: 'Test',
         component: () => import('@/views/TestView.vue')
       },
+      {
+        path: '/payment-result',
+        component: () => import('@/views/PaymentResult.vue'),
+        name: 'PaymentResult'
+      }
     ]
   },
 
