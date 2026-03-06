@@ -84,8 +84,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/map/**").permitAll()
                         // 標籤列表：允許匿名存取（SearchBar 動態載入標籤不需要登入）
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/categories").permitAll()
-                        // --- 新增：放行客服表單 API ---
-                        .requestMatchers("/api/feedback/**").permitAll()
+                        // --- 新增：放行客服表單相關 API（公開） ---
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/feedback").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/feedback/typeList").permitAll()
+                        // /api/feedback/userInfoList 需要登入（使用 @AuthenticationPrincipal）
                         // --- 新增：放行客服後台清單 GET（回覆 PUT 仍需認證）---
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/feedbackList").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/feedbackList/status-list")
@@ -93,7 +95,8 @@ public class SecurityConfig {
                         // 商家資訊端點：允許公開查看特定商家資訊
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/owner/store/{id}").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/config/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available-slots").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available-slots")
+                        .permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,
