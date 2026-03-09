@@ -105,6 +105,8 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/config/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/bookings/available-slots").permitAll()
                         .requestMatchers("/api/orders/**").permitAll()
+                        // 前端商店顯示最新購買資料
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/orders/latest").permitAll()
                         // 管理員權限端點
                         // .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
                         // .requestMatchers(HttpMethod.PUT,

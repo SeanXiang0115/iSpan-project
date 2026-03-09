@@ -40,8 +40,7 @@ const routes = [
           {
             path: 'orders',
             name: 'UserOrders',
-            component: () => import('@/views/UserInfoContent.vue'),
-            props: { title: '我的訂單' }
+            component: () => import('@/views/UserInfoOrders.vue'),
           },
           {
             path: 'store-registration',

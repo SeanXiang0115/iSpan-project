@@ -41,12 +41,11 @@ onMounted(() => {
 const handleConfirm =async () => {
 
     // 呼叫 store 的 action 更新庫存
-    await depot.updateStock(props.product.id,editMode.value, editValue.value);
-
+    await depot.updateStock(props.product.id, editMode.value, editValue.value);
     await Swal.fire({
         icon: 'success',
         title: '庫存更新成功',
-        text: `產品 ${props.product.productName} 的庫存已更新為 ${props.product.stock} 件`,
+        text: `產品 ${props.product.productName} 的庫存已更新為 ${editValue.value} 件`,
         timer: 1500,
         showConfirmButton: false
     });
@@ -54,6 +53,7 @@ const handleConfirm =async () => {
     // 重設輸入框
     editValue.value = 0;
     emit('close')
+    
 };
 </script>
 

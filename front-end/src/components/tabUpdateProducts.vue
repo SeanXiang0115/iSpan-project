@@ -39,6 +39,9 @@ const handleUpdate = async () => {
                     title: '商品更新成功',
                     timer: 1500
                 });
+
+                selectedId.value = ''
+                editForm.value = null
             }
     } catch (error) {
         console.error("更新失敗", error);
@@ -88,6 +91,8 @@ const confirmDelete  = async (item) => {
         // 2. 回到初始狀態：清空 ID 與 表單
             selectedId.value = ''; // 這會觸發 watch，讓 editForm 變回 null
             editForm.value = null; 
+            editValue.value = 0;
+            
 
         } catch (error){
 

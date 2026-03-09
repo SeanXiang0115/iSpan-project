@@ -22,7 +22,11 @@ export const cartAPI = {
     //刪除購物車項目
     delete(cartDetailsId) {
         return api.delete(`/cart/${cartDetailsId}`);
-    }
+    },
+
+    sync() {
+        return api.post('/cart/sync');
+    },
 
 };
 
