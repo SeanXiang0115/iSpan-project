@@ -196,8 +196,8 @@ const viewDetail = (order) => {
                     <div class="form-item">
                         <label>付款方式</label>
                         <select v-model="editingOrder.payMethod">
-                            <option value="線上付款">線上付款</option>
-                            <option value="cod">貨到付款</option>
+                            <option value="ECpay">ECpay</option>
+                            <option value="cod">cod</option>
                         </select>
                     </div>
                     <div class="form-item">

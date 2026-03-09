@@ -61,6 +61,8 @@ public class OrderService {
         order.setPayMethod(dto.getPaymentMethod());
         order.setStatus(dto.getPaymentMethod().equals("ECpay") ? "待付款" : "待出貨");
 
+        order.setMerchantTradeNo("ORD" + System.currentTimeMillis());
+
         // 3. 計算總金額
         BigDecimal totalPrice = cartItems.stream()
             .map(item -> item.getProduct().getPrice()
@@ -79,8 +81,10 @@ public class OrderService {
             Stock stock = stockRepository.findById(cartItem.getProduct().getProductId())
                 .orElseThrow(() -> new RuntimeException("找不到庫存：" + cartItem.getProduct().getProductName()));
 
+
+            //庫存檢查
             if (stock.getAvailableQuantity() < cartItem.getQuantity()) {
-                throw new RuntimeException("庫存不足：" + cartItem.getProduct().getProductName());
+                throw new RuntimeException("庫存不足：" + cartItem.getProduct().getProductName()  + "：" + stock.getAvailableQuantity());
             }
             stock.setAvailableQuantity(stock.getAvailableQuantity() - cartItem.getQuantity());
             stockRepository.save(stock);

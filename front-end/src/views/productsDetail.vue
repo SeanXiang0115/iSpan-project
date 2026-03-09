@@ -34,6 +34,11 @@ const updateQuantity = (val) => {
 };
 
 const handleAddToCart = async () => {
+    if (products.value.stock <= 0) {
+        Swal.fire('補貨中', '此商品目前無庫存', 'warning')
+        return
+    }
+    
     try{
         await cartStore.addToCart({
         id: products.value.id,

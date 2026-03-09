@@ -13,6 +13,7 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -39,6 +40,11 @@ public class Stock {
     @Column(name = "update_at" , nullable=false)
     private LocalDateTime updateAt;
     //這邊應該要修改SQL為nullable = false
+
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
 
     @OneToOne(fetch =FetchType.LAZY)

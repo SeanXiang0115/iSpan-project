@@ -58,6 +58,17 @@ public class CartController {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
+
+
+
+    @PostMapping("/sync")
+    public ResponseEntity<List<CartDTO>> syncCart() {
+        List<CartDTO> cartList = cartService.syncCartWithStock();
+        return ResponseEntity.ok(cartList);
+    }
+
+
+
 }
 
 
