@@ -6,10 +6,12 @@ import Swal from 'sweetalert2'
 import { useOrderDepot } from '@/stores/orderDepot.js'
 import TwCitySelector from 'tw-city-selector'
 import api from '@/api/config'
+import { shopLog } from '@/utils/shopLogger'
 
 const cartStore = useCartStore()
 const router = useRouter()
 const orderDepot = useOrderDepot()
+
 
 
 
@@ -27,7 +29,9 @@ const orderForm = ref({
     note: ''
 })
 
-onMounted(() => {
+onMounted( async () => {
+    await cartStore.fetchCart();
+
     new TwCitySelector({
         el: '#twzipcode',
         elCounty: '.county',
@@ -39,14 +43,20 @@ onMounted(() => {
     });
 
     setTimeout(() => {
-        const countyEl = document.querySelector('#twzipcode .county')
-        const districtEl = document.querySelector('#twzipcode .district')
-        const zipcodeEl = document.querySelector('#twzipcode .zipcode')
+        // 用 name 屬性選取，而不是 class
+        const countyEl = document.querySelector('#twzipcode select[name="county"]')
+        const districtEl = document.querySelector('#twzipcode select[name="district"]')
+        const zipcodeEl = document.querySelector('#twzipcode input[name="zipcode"]')
         
         if (countyEl?.value) orderForm.value.city = countyEl.value
         if (districtEl?.value) orderForm.value.district = districtEl.value
         if (zipcodeEl?.value) orderForm.value.zipcode = zipcodeEl.value
-    }, 500)
+
+        // 同時監聽 change 事件確保切換時也能抓到
+        countyEl?.addEventListener('change', (e) => { orderForm.value.city = e.target.value })
+        districtEl?.addEventListener('change', (e) => { orderForm.value.district = e.target.value })
+        zipcodeEl?.addEventListener('change', (e) => { orderForm.value.zipcode = e.target.value })
+    }, 300)
 })
 
 
@@ -65,7 +75,7 @@ const isValidEmail = (email) => {
 };
 
 const handleCheckout = async () => {
-    console.log('表單內容：', orderForm.value) 
+    shopLog('表單內容：', orderForm.value) 
     // 簡單表單驗證
     
 
@@ -82,7 +92,7 @@ const handleCheckout = async () => {
     }
 
     const orderNumber = 'ORD' + Date.now();
-
+    shopLog('送出地址：', orderForm.value.city, orderForm.value.district, orderForm.value.street)
 
 
     if (cartStore.items.length === 0) {
@@ -141,7 +151,7 @@ const handleCheckout = async () => {
                 })),
             })
 
-            console.log('目前的訂單總數：', orderDepot.orders.length)
+            shopLog('目前的訂單總數：', orderDepot.orders.length)
 
             await cartStore.fetchCart()
 
@@ -167,11 +177,10 @@ const handleCheckout = async () => {
                     const form = div.querySelector('form')
                     document.body.appendChild(form)
                     form.submit()
-                }
-                // } else {
+                } else {
                     
-                //     router.push('/shopStore')
-                // }
+                    router.push('/userInfo/orders')
+                }
 
             } else {
                 // 貨到付款 → 直接顯示成功
@@ -185,11 +194,32 @@ const handleCheckout = async () => {
             }
 
         } catch (error) {
-            Swal.fire('錯誤', error.response?.data?.error || '結帳失敗', 'error')
+            
+            const msg = error.response?.data?.error || '結帳失敗'
+    
+            if (msg.includes('庫存不足')) {
+                // 格式：庫存不足：商品名稱：剩餘數量
+                const parts = msg.split('：')
+                const productName = parts[1] || ''
+                const remainStock = parseInt(parts[2]) || 0
+                
+                // 更新購物車該商品數量為剩餘庫存
+                if (remainStock === 0) {
+                    sessionStorage.setItem('outOfStockItem', productName)
+                } else {
+                    cartStore.updateQuantityToStock(productName, remainStock)
+                }
+                
+                await Swal.fire('庫存不足', `「${productName}」庫存僅剩 ${remainStock} 件，已幫您調整數量`, 'warning')
+                router.push('/cart')
+            } else {
+                Swal.fire('錯誤', msg, 'error')
+            }
         }
-    }
-console.log('city:', orderForm.value.city, 'district:', orderForm.value.district)
 
+
+    shopLog('city:', orderForm.value.city, 'district:', orderForm.value.district)
+    }
 }
 </script>
 
@@ -210,8 +240,11 @@ console.log('city:', orderForm.value.city, 'district:', orderForm.value.district
                         <br>
                         <div class="form-group">
                             <label>手機號碼 *</label>
-                            <input v-model="orderForm.phone" type="tel" class="form-control" >
+                            <input v-model="orderForm.phone" type="tel" class="form-control"
+                            @input="orderForm.phone = orderForm.phone.replace(/\D/g, '')"
+                            maxlength="15">
                             <span style="color: #cdbabab4;">ex:0912345678</span>
+
 
                         </div>
                         <br>

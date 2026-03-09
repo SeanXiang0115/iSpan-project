@@ -32,7 +32,7 @@ public class EcpayService {
         params.put("TradeDesc", "Shopping");
         params.put("ItemName", "Order" + orderId);
         params.put("ReturnURL", NGROK_URL + "/api/ecpay/return");
-        params.put("ClientBackURL", "http://localhost:5173/payment-result");
+        params.put("ClientBackURL", "http://localhost:5173/userInfo/orders");
         params.put("OrderResultURL", NGROK_URL + "/api/ecpay/result");
         params.put("ChoosePayment", "ALL");
         params.put("EncryptType", "1");
