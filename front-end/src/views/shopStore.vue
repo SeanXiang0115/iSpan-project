@@ -8,6 +8,7 @@ import { useRouter} from 'vue-router'
 import banner from '../components/common/banner.vue'
 import {onMounted} from 'vue';
 import { useProductsDepot } from '@/stores/productsDepot';
+import OrderToast from '@/components/OrderToast.vue'
 
 const depot = useProductsDepot();
 const router =useRouter();
@@ -27,7 +28,12 @@ onMounted(() => {
 </script>
 
 <template>
+<OrderToast />
+
 <banner />
+
+
+
 
 
 <storeCard />

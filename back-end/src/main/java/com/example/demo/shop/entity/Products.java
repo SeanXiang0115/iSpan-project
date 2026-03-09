@@ -52,6 +52,9 @@ public class Products{
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime added;
 
+    @Column(name = "category", length = 50)
+    private String category;
+
     
     //資料存數的時候，自動填入當下時間
     @PrePersist 

@@ -9,6 +9,7 @@ import com.example.demo.shop.dto.ProductsDTO;
 import com.example.demo.shop.entity.Products;
 import com.example.demo.shop.entity.Stock;
 import com.example.demo.shop.exception.ProductNotFoundException;
+import com.example.demo.shop.repository.OrderDetailsRepository;
 import com.example.demo.shop.repository.ProductsRepository;
 import com.example.demo.shop.repository.StockRepository;
 
@@ -20,6 +21,8 @@ public class ProductsService {
     private ProductsRepository productsRepository;
     @Autowired
     private StockRepository stockRepository;
+    @Autowired
+    private OrderDetailsRepository orderDetailsRepository;
 
 
     @Transactional //確認商品跟庫存同時成功或同時失敗
@@ -76,8 +79,16 @@ public class ProductsService {
         Products deleteProducts = productsRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("資料有異動，找不到該商品，請重新整理畫面再做修改"));
         
+        // 先把 order_details 的 product 設為 null，保留訂單紀錄但解除關聯
+        orderDetailsRepository.findByProduct_ProductId(id).forEach(detail -> {
+            detail.setProduct(null);
+            orderDetailsRepository.save(detail);
+        });
+
+        // 再刪除庫存
         stockRepository.findById(id).ifPresent(stock -> stockRepository.delete(stock));
 
+        // 最後刪除商品
         productsRepository.delete(deleteProducts);
         return deleteProducts;
     }
