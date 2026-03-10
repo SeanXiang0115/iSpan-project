@@ -182,7 +182,7 @@ const backToShop = () =>{
 
 .button-group-right {
     display: flex;
-    align-items: center; /* 防止按鈕高度被拉伸 */
+    align-items: center; 
 }
 
 .text-right {

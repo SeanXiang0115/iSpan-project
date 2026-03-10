@@ -42,7 +42,6 @@ const addToCart = async (item) => {
 
     const authStore = useAuthStore();
 
-    //如果沒登入，先存路徑再跳轉
     if (!authStore.isLoggedIn) {
         const result = await Swal.fire({
             title: '請先登入',
@@ -54,7 +53,6 @@ const addToCart = async (item) => {
         });
 
         if(result.isConfirmed) {
-            // 存下目前這頁的路徑 (/shopStore)
             sessionStorage.setItem  ('redirectPath', router.currentRoute.value.fullPath);
             router.push('/login');
         }
@@ -141,7 +139,7 @@ const productsList = computed(() => {
         
         <div class="text-center">
             <h5 class="card-title">{{item.productName}}</h5>
-            <!-- <p class="card-text text-muted" style="font-size:0.9rem">{{item.description}}</p> -->
+            
             <div class="price text-success">NT$ {{item.price}}</div>
         </div>
         
@@ -172,8 +170,7 @@ const productsList = computed(() => {
 
 .shop-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 水平均分為3欄 */
-    gap: 30px;
+    grid-template-columns: repeat(3, 1fr); 
     justify-items: center;
     align-items: start;
 }

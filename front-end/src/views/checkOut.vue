@@ -76,7 +76,7 @@ const isValidEmail = (email) => {
 
 const handleCheckout = async () => {
     shopLog('表單內容：', orderForm.value) 
-    // 簡單表單驗證
+
     
 
     if (!orderForm.value.name || !orderForm.value.phone ||  !orderForm.value.street) {
@@ -100,7 +100,7 @@ const handleCheckout = async () => {
         return
     }
 
-    //建立訂單狀態為待付款、已付款、出貨中、已完成
+    //建立訂單狀態
     const getOrderStatus = () =>{
         if(orderForm.value.paymentMethod === 'ECpay') {
             return '待付款'
@@ -114,7 +114,7 @@ const handleCheckout = async () => {
     const currentStatus= getOrderStatus();
 
 
-    // 這裡模擬送出訂單
+    
     const result = await Swal.fire({
         title: '確認送出訂單？',
         text: `總金額為 NT$ ${cartStore.totalPrice + shippingFee.value}`,
@@ -157,7 +157,6 @@ const handleCheckout = async () => {
 
             // 判斷付款方式
             if (orderForm.value.paymentMethod === 'ECpay') {
-                // 信用卡 → 詢問是否前往綠界付款
                 const payResult = await Swal.fire({
                     icon: 'success',
                     title: '訂單建立成功！',
@@ -369,12 +368,11 @@ const handleCheckout = async () => {
 
 <style scoped>
 .checkout-container {
-    max-width: 1000px; /* 因為是直排，寬度縮小一點比較好看 */
+    max-width: 1000px; 
     margin: 40px auto;
     padding: 0 20px;
 }
 
-/* 關鍵修改：改為垂直排列 */
 .checkout-layout {
     display: flex;
     flex-direction: column; 
@@ -383,7 +381,7 @@ const handleCheckout = async () => {
 }
 
 .form-section, .summary-section {
-    width: 100%; /* 寬度佔滿 */
+    width: 100%; 
 }
 
 /* 卡片樣式 */

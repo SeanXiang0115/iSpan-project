@@ -41,7 +41,7 @@ public class CartController {
         }
     }
 
-    //取得目前購物清單(先抓User 1)
+    //取得目前購物清單
     @GetMapping("/all")
     public ResponseEntity<List<CartDTO>> getMyCart(){
         List<CartDTO> cartList = cartService.getCartItems();

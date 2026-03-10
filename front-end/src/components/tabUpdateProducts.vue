@@ -159,7 +159,7 @@ const confirmDelete  = async (item) => {
 </template>
 
 <style scoped>
-/* 樣式同上，增加 Select 樣式 */
+
 .select-input { 
     padding: 0.75rem; 
     border: 1px solid #ddd; 

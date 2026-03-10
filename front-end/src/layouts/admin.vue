@@ -85,7 +85,7 @@
             </ul>
           </li>
 
-          <!-- anna 商品管理 -->
+          <!-- 商品管理 -->
           <li class="nav-item has-submenu">
               <a href="#" class="nav-link" @click.prevent="toggleSubmenu('products')">
                   <i class="bi bi-box-seam"></i>

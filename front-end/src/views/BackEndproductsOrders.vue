@@ -42,7 +42,6 @@ onMounted(async () => {
 const fetchOrders = async () => {
     try {
         const res = await apiWrapper.get('/orders/all')
-        // res 可能已經被 apiWrapper 解包成陣列，若是，則直接使用
         orders.value = Array.isArray(res) ? res : (res.data || [])
     } catch (err) {
         console.error('無法取得訂單資料', err)
