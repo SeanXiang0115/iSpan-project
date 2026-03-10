@@ -24,7 +24,7 @@ const handleUpdate = async () => {
                 productName: editForm.value.productName,
                 price: editForm.value.price,
                 image: editForm.value.image,
-                description: editForm.value.description,
+                productDescription: editForm.value.description,
                 stock: editForm.value.stock
             
         });

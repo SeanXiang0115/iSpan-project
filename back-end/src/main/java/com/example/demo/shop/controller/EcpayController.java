@@ -29,7 +29,7 @@ public class EcpayController {
 
     // 產生付款表單
     @GetMapping("/pay/{orderId}")
-    public ResponseEntity<String> pay(@PathVariable Integer orderId) {
+    public ResponseEntity<String> pay(@PathVariable("orderId") Integer orderId) {
         Orders order = ordersRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("找不到訂單"));
 
