@@ -158,4 +158,5 @@ const handleMerchantApplication = () => {
 .navbar-toggler:focus {
   box-shadow: none;
 }
+
 </style>

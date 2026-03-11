@@ -67,7 +67,7 @@ public class Products{
     
 
     @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference //加入這個代表"這是父端"
+    @JsonManagedReference //父端
     private Stock stock;
 
 }

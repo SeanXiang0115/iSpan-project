@@ -42,7 +42,6 @@ const addToCart = async (item) => {
 
     const authStore = useAuthStore();
 
-    //如果沒登入，先存路徑再跳轉
     if (!authStore.isLoggedIn) {
         const result = await Swal.fire({
             title: '請先登入',
@@ -54,8 +53,8 @@ const addToCart = async (item) => {
         });
 
         if(result.isConfirmed) {
-            // 存下目前這頁的路徑 (/shopStore)
-            sessionStorage.setItem  ('redirectPath', router.currentRoute.value.fullPath);
+            console.log('儲存跳轉路徑：', router.currentRoute.value.fullPath)
+            sessionStorage.setItem('redirectPath', router.currentRoute.value.fullPath);
             router.push('/login');
         }
         return;
@@ -141,7 +140,7 @@ const productsList = computed(() => {
         
         <div class="text-center">
             <h5 class="card-title">{{item.productName}}</h5>
-            <!-- <p class="card-text text-muted" style="font-size:0.9rem">{{item.description}}</p> -->
+            
             <div class="price text-success">NT$ {{item.price}}</div>
         </div>
         
@@ -172,9 +171,8 @@ const productsList = computed(() => {
 
 .shop-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 水平均分為3欄 */
-    gap: 30px;
-    justify-items: center;
+    grid-template-columns: repeat(3, 1fr);  
+    gap: 20px;
     align-items: start;
 }
 
@@ -183,22 +181,25 @@ const productsList = computed(() => {
     width: 100%;
 }
 
+/* aspect-ratio 讓圖片等比縮放*/
 .product-card img {
     width: 100%;
-    height: 450px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
+    height: auto;
+    display: block;
 }
 
 .card-title {
-    margin: 0 0 12px;
-    font-size: 1.5rem;
+    margin: 0 0 8px;
+    font-size: 1.2rem;      
     font-weight: 700;
 }
 
 .price {
-    font-size: 1.25rem;
+    font-size: 1.1rem;      
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .search-bar {

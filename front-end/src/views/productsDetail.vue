@@ -15,7 +15,7 @@ const buyQuantity = ref(1);
 
 const products = computed(() => {
     const routedId = route.params.id;
-    // 使用 find 尋找時，確保雙方都是字串，避免類型錯誤 (如 1 !== "1")
+    
     const found = depot.products.find(p => String(p.id) === String(routedId));
     
     if (found) {
@@ -327,7 +327,7 @@ button:disabled {
     color: #444;
     line-height: 1.8;
     font-size: 1.05rem;
-    max-width: 800px; /* 限制寬度讓長文字易於閱讀 */
+    max-width: 800px; 
 }
 
 .extra-info {

@@ -84,6 +84,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/store-registrations/**").authenticated()
                         // 放行綠界相關 API（付款、回傳等）
                         .requestMatchers("/api/ecpay/**").permitAll()
+                        //放行選擇超商相關
+                        .requestMatchers("/api/ecpay/return", "/api/ecpay/result", "/api/ecpay/map-callback").permitAll()
                         // 產品相關 API: GET 允許匿名瀏覽，POST/PUT/DELETE 需要驗證或店家/管理員權限
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers("/api/products/**").authenticated() // 新增、修改、刪除需登入 (若有特定 Role 請自行調整)
@@ -149,7 +151,9 @@ public class SecurityConfig {
                 .setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:8080", "http://localhost:5173",
                 "https://shily-untusked-yuri.ngrok-free.dev",
                 "https://payment-stage.ecpay.com.tw",  
-                "https://payment.ecpay.com.tw"
+                "https://payment.ecpay.com.tw",
+                "https://logistics-stage.ecpay.com.tw",
+                "https://logistics.ecpay.com.tw"
                     
                 ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));

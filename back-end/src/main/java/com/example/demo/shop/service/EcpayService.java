@@ -53,9 +53,9 @@ public class EcpayService {
 
     }
 
-    private String generateCheckMac(TreeMap<String, String> params) {
+    public String generateCheckMac(TreeMap<String, String> params) {
         try {
-            // 步驟1: 組合字串
+            //組合字串
             StringBuilder sb = new StringBuilder();
             sb.append("HashKey=").append(HASH_KEY);
             for (var entry : params.entrySet()) {
@@ -63,13 +63,12 @@ public class EcpayService {
             }
             sb.append("&HashIV=").append(HASH_IV);
 
-            // 步驟2: URLEncode
+            // URLEncode
             String encoded = URLEncoder.encode(sb.toString(), "UTF-8");
             
-            // 步驟3: 轉小寫
             encoded = encoded.toLowerCase();
             
-            // 步驟4: 依綠界規範替換字元
+            // 依綠界規範替換字元
             encoded = encoded.replace("%2d", "-");
             encoded = encoded.replace("%5f", "_");
             encoded = encoded.replace("%2e", ".");
@@ -80,7 +79,7 @@ public class EcpayService {
 
             System.out.println("加密前字串：" + encoded);
 
-            // 步驟5: SHA256 轉大寫
+            // SHA256 轉大寫
             return DigestUtils.sha256Hex(encoded).toUpperCase();
             
         } catch (Exception e) {
@@ -92,7 +91,6 @@ public class EcpayService {
         try {
             String encoded = URLEncoder.encode(str, StandardCharsets.UTF_8);
         
-            // 轉小寫
             encoded = encoded.toLowerCase();
             
             // 依照綠界規範替換回來

@@ -58,27 +58,6 @@ const handleAddProduct =async () => {
         isSubmitting.value = false; 
     }
 
-    // // 生成新 ID (例如取最後一個 ID + 1)
-    // const newId = (depot.products.length + 1).toString().padStart(4, '0');
-    
-    // const newProduct = {
-    //     id: newId,
-    //     ...form.value,
-    //     StockingTime: new Date().toISOString().split('T')[0] // 取得今天日期
-    // };
-
-    // // 推送到 Store
-    // depot.products.push(newProduct);
-
-    // Swal.fire({
-    //     icon: 'success',
-    //     title: '商品新增成功',
-    //     text: `ID: ${newId} - ${form.value.productName}`,
-    //     timer: 1500
-    // });
-
-    // // 清空表單
-    // form.value = { productName: '', price: 0, stock: 0, description: '', image: 'https://placehold.co/600x400?text=New+Product' };
 };
 
 const handleImageUpload = (event) => {

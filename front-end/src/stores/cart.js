@@ -18,7 +18,6 @@ export const useCartStore = defineStore('cart', {
     },
 
     actions: {
-        // 所有的 function 必須都在 actions 的這個大括號裡面！
 
         async fetchCart() {
             try {
