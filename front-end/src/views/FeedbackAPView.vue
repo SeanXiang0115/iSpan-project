@@ -127,6 +127,16 @@ const handleReplySubmit = async ({ feedbackId, reply, statusId }) => {
 };
 
 // ─── 輔助函式 ────────────────────────────────────────
+const getStatusBadgeClass = (statusName) => {
+    const styleMap = {
+        '待處理': 'bg-warning text-dark',
+        '待致電': 'bg-danger text-white',
+        '追蹤中': 'bg-info text-white',
+        '已處理': 'bg-success text-white'
+    };
+    return styleMap[statusName] || 'bg-secondary text-white';
+};
+
 const truncate = (str, len = 20) => {
     if (!str) return '';
     return str.length > len ? str.slice(0, len) + '...' : str;
@@ -213,7 +223,7 @@ const formatDate = (dateStr) => {
                                 <td>
                                     <span
                                         class="badge"
-                                        :class="item.statusName === '已處理' ? 'bg-success text-white' : 'bg-warning text-dark'"
+                                        :class="getStatusBadgeClass(item.statusName)"
                                     >
                                         {{ item.statusName || '未知' }}
                                     </span>

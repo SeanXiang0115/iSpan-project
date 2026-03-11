@@ -50,7 +50,7 @@ const routes = [
           {
             path: 'feedback',
             name: 'UserInfoFeedback',
-            component: () => import('@/views/UserInfoFeedback.vue')
+            component: () => import('@/views/UserInfoFeedbackView.vue')
           }
         ]
       },
