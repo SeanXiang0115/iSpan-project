@@ -54,7 +54,7 @@ const addToCart = async (item) => {
 
         if(result.isConfirmed) {
             console.log('儲存跳轉路徑：', router.currentRoute.value.fullPath)
-            sessionStorage.setItem('redirectPath', router.currentRoute.value.fullPath);
+            localStorage.setItem('shopRedirectPath', router.currentRoute.value.fullPath);  // 改這行
             router.push('/login');
         }
         return;
