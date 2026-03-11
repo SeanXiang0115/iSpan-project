@@ -10,19 +10,27 @@
 </template>
 
 <style>
-
-
-.banner-header{
+.banner-header {
     background-image: url('/src/pictures/bannerBrown.jpg');
-    width:2400px;
-    height:300px;
-    
+    width: 100%;           /* 改掉固定 2400px */
+    height: 300px;
+    background-size: cover;
+    background-position: top center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
 
+.banner-header-h1 {
+    font-size: 64px;
+    font-weight: 700;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.858);
+}
 
-    background-size: cover; /* 關鍵：確保圖片填滿且不變形 */
-    background-position: top; /* 圖片置中 */
-    background-repeat: no-repeat; 
-    background-attachment: fixed; /* 讓背景圖片固定在視口 */
+.banner-header-p {
+    margin: 12px 0 0;
+    font-size: 30px;
+    color: rgba(255, 255, 255, 0.51);
 }
 
 .header-cart {
@@ -30,21 +38,5 @@
     padding: 15px 0;
     text-align: center;
     color: #f0ecec;
-}
-
-
-.banner-header-h1 {
-    font-size: 64px;
-    font-weight: 700;
-    margin: 0;
-    color: rgba(255, 255, 255, 0.858);
-
-}
-
-
-.banner-header-p {
-    margin: 12px 0 0;
-    font-size: 30px;
-    color: rgba(255, 255, 255, 0.51);
 }
 </style>

@@ -65,7 +65,7 @@ const handleUpdate = async () => {
 
 
 // 執行刪除
-const confirmDelete  = async (item) => {
+const confirmDelete = async (item) => {
     const result = await Swal.fire({
         title: '確定要刪除嗎？',
         text: `商品「${item.productName}」刪除後將無法還原！`,
@@ -75,36 +75,36 @@ const confirmDelete  = async (item) => {
         cancelButtonColor: '#3085d6',
         confirmButtonText: '是的，刪除它',
         cancelButtonText: '取消'
-    })
-        if (result.isConfirmed) {
-            try{
-                await depot.deleteProduct(item.id);
-
-                await Swal.fire({
-                    icon:'success',
-                    title:'已刪除',
-                    text: '該商品已從資料庫清單中移除',
-                    timer:1500
-                })
-            
+    });
     
-        // 2. 回到初始狀態：清空 ID 與 表單
-            selectedId.value = ''; // 這會觸發 watch，讓 editForm 變回 null
-            editForm.value = null; 
-            editValue.value = 0;
-            
+    if (result.isConfirmed) {
+        try {
+            await depot.deleteProduct(item.id);
 
-        } catch (error){
-
-            Swal.fire({
-                icon:'error',
-                title:'刪除失敗',
-                test:'此商品可能已被預訂、無法刪除'
+            // 刪除成功，顯示成功訊息
+            await Swal.fire({
+                icon: 'success',
+                title: '已刪除',
+                text: '該商品已從資料庫清單中移除',
+                timer: 1500
             });
-        }     
             
+            // 清空表單
+            selectedId.value = '';
+            editForm.value = null;
+            
+        } catch (error) {
+            console.error('刪除商品失敗:', error);
+            
+            Swal.fire({
+                icon: 'error',
+                title: '刪除失敗',
+                text: '此商品可能已被預訂、無法刪除',
+                timer: 2000
+            });
+        }
     }
-}
+};
 
 
 </script>

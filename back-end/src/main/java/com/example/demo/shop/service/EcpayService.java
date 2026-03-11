@@ -53,7 +53,7 @@ public class EcpayService {
 
     }
 
-    private String generateCheckMac(TreeMap<String, String> params) {
+    public String generateCheckMac(TreeMap<String, String> params) {
         try {
             //組合字串
             StringBuilder sb = new StringBuilder();

@@ -171,8 +171,8 @@ const productsList = computed(() => {
 
 .shop-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); 
-    justify-items: center;
+    grid-template-columns: repeat(3, 1fr);  
+    gap: 20px;
     align-items: start;
 }
 
@@ -181,22 +181,25 @@ const productsList = computed(() => {
     width: 100%;
 }
 
+/* aspect-ratio 讓圖片等比縮放*/
 .product-card img {
     width: 100%;
-    height: 450px;
+    aspect-ratio: 1 / 1;
     object-fit: cover;
+    height: auto;
+    display: block;
 }
 
 .card-title {
-    margin: 0 0 12px;
-    font-size: 1.5rem;
+    margin: 0 0 8px;
+    font-size: 1.2rem;      
     font-weight: 700;
 }
 
 .price {
-    font-size: 1.25rem;
+    font-size: 1.1rem;      
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 
 .search-bar {
