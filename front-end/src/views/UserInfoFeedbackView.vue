@@ -1,6 +1,6 @@
 <template>
   <div class="user-info-content">
-    <h4 class="mb-3 border-bottom pb-2">回饋清單</h4>
+    <h4 class="mb-3 border-bottom pb-2">我的回饋</h4>
     
     <div class="mb-4">
       <div v-if="loading" class="text-center py-5">
