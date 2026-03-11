@@ -1,17 +1,18 @@
 <script setup>
 
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
-
+import { useAuthStore } from '@/stores/auth';
 import Swal from 'sweetalert2';
 import { useProductsDepot } from '@/stores/productsDepot';
 
-
 const route = useRoute();
+const router = useRouter(); 
 const cartStore = useCartStore();
 const depot = useProductsDepot();
 const buyQuantity = ref(1);
+const authStore = useAuthStore();
 
 const products = computed(() => {
     const routedId = route.params.id;
@@ -34,6 +35,25 @@ const updateQuantity = (val) => {
 };
 
 const handleAddToCart = async () => {
+
+    // 未登入檢查
+    if (!authStore.isLoggedIn) {
+        const result = await Swal.fire({
+            title: '請先登入',
+            text: '登入後即可將商品加入購物車',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: '前往登入',
+            cancelButtonText: '取消'
+        });
+
+        if (result.isConfirmed) {
+            localStorage.setItem('shopRedirectPath', '/cart');
+            router.push('/login');
+        }
+        return;
+    }
+
     if (products.value.stock <= 0) {
         Swal.fire('補貨中', '此商品目前無庫存', 'warning')
         return

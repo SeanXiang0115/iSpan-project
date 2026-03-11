@@ -12,6 +12,27 @@ const cartStore = useCartStore();
 const authStore = useAuthStore();
 const loading = ref(false);
 
+const goToCart = async () => {
+    if (!authStore.isLoggedIn) {
+        const result = await Swal.fire({
+            title: '請先登入',
+            text: '登入後即可將商品加入購物車',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: '前往登入',
+            cancelButtonText: '取消'
+        });
+
+        if (result.isConfirmed) {
+            localStorage.setItem('shopRedirectPath', '/cart');
+            router.push('/login');
+        }
+        return;
+    }
+    router.push('/cart');
+};
+
+
 const openStoreInfoModal = async () => {
     router.push('/owner/storeInfo');
     
@@ -125,6 +146,7 @@ const goTo = (path) => {
 };
 
 const handleLogout = () => {
+  cartStore.clearCart();
   authStore.logout();
   router.push('/login');
 };
@@ -225,7 +247,7 @@ const handleMerchantApplication = () => {
             {{ authStore.userName }} 您好
           </div>
 
-          <a class="nav-link position-relative px-3"  title="購物車" @click="router.push('/cart')">
+          <a class="nav-link position-relative px-3"   title="購物車" @click="goToCart">
             <i class="bi bi-cart3"></i>
             <span class="position-absolute top-25 start-75 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
               {{ cartStore.totalQuantity }}

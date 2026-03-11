@@ -53,13 +53,13 @@ const doLogin = async (dataToSubmit) => {
     });
     
     // 若有登入前的重定向路徑，就回去；否則回首頁
-    const redirectPath = sessionStorage.getItem('redirectPath');
-      if (redirectPath) {
-        sessionStorage.removeItem('redirectPath');
+    const redirectPath = localStorage.getItem('shopRedirectPath');
+    if (redirectPath) {
+        localStorage.removeItem('shopRedirectPath');
         router.push(redirectPath);
-      } else {
-      router.push('/');
-      }
+    } else {
+        router.push('/');
+    }
       
   } catch (error) {
     console.error('Login failed:', error);

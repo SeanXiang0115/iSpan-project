@@ -68,7 +68,8 @@ const routes = [
       {
         path: '/Cart',
         component: () => import('@/views/shopCart.vue'),
-        name: 'ShopCart'
+        name: 'ShopCart',
+        // meta: { requiresAuth: true }
       },
       {
         path: '/storeInfo/reservation/:id',
@@ -126,7 +127,8 @@ const routes = [
       {
         path: 'productsDetail/:id',
         component: () => import('@/views/productsDetail.vue'),
-        name: 'productsDetail',
+        name: 'productsDetail'
+
       },
       {
         path: 'checkOut',
