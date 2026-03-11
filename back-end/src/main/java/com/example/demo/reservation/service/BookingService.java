@@ -54,7 +54,7 @@ public class BookingService {
         dto.setName(store.getStoreName());
         dto.setTimeSlot(store.getTimeSlot());
         dto.setTimeLimit(store.getTimeLimit());
-        // 3. 獲取營業時間
+        // 3. 獲取營業時間(oh代表OpenHour的原始物件，ohDto代表轉換後的DTO物件，ohDtos是轉換後的DTO清單)
         List<ReservationSettingsDto.OpenHourDto> ohDtos = openHourRepository.findByStore_StoreId(storeId).stream()
                 .map(oh -> {
                     ReservationSettingsDto.OpenHourDto ohDto = new ReservationSettingsDto.OpenHourDto();
@@ -89,7 +89,7 @@ public class BookingService {
 
         // 取得當天是星期幾 (Java 的列舉 1-7)
         int dayOfWeek = date.getDayOfWeek().getValue();
-        // 資料庫存 0(日)-6(六)，要做轉換
+        // 我的資料庫存 0(日)-6(六)，其中星期日(0)要做轉換，如果今天是星期日 Java會是 7 後端就轉成 0
         int dbDayValue = (dayOfWeek == 7) ? 0 : dayOfWeek;
 
         // 獲取OpenHour
@@ -98,39 +98,39 @@ public class BookingService {
 
         // 使用複合主鍵 SeatId 查詢
         SeatId seatId = new SeatId(storeId, seatType);
-        Seat seatConfig = seatRepository.findById(seatId)
+        Seat seatConfig = seatRepository.findById(seatId) // 根據複合主鍵的兩個參數(店家id與桌位類型)查詢
                 .orElseThrow(() -> new RuntimeException("該店未提供此桌型"));
         Integer totalTables = seatConfig.getTotalCount();
 
         // -----------------開始寫可訂位時段迴圈------------------
-        List<SlotAvailDto> slots = new ArrayList<>();
-        LocalTime currentTime = openHour.getOpenTime();
+        List<SlotAvailDto> slots = new ArrayList<>(); // 最終回傳的新清單(顯示給前端的可訂位時段清單)
+        LocalTime openTime = openHour.getOpenTime(); // 最早可訂位時間
         LocalTime closeTime = openHour.getCloseTime(); // 最後可訂位時間
 
-        while (!currentTime.isAfter(closeTime)) {
+        while (!openTime.isAfter(closeTime)) { // while的條件要和註解第6點一起看
             // 1. 計算當前時段的末端
-            LocalTime slotEnd = currentTime.plusMinutes(timeLimit);
+            LocalTime slotEnd = openTime.plusMinutes(timeLimit);
 
             // 2. 檢查是否為店休
-            if (isOffDay(storeId, date, currentTime, slotEnd)) {
-                slots.add(new SlotAvailDto(currentTime.toString(), false));
-                currentTime = currentTime.plusMinutes(timeSlot);
-                continue;
+            if (isOffDay(storeId, date, openTime, slotEnd)) {
+                slots.add(new SlotAvailDto(openTime.toString(), false));
+                openTime = openTime.plusMinutes(timeSlot);
+                continue; // 如果是店休，直接標記為不可用並跳過下面所有方法，回到頂端檢查下一個時段
             }
 
-            // 3. 調用下方createBooking()方法裡面的 countOverlappingBookings() repository 方法
+            // 3. 調用下方createBooking()方法裡面的 countOverlappingBookings() repository 方法，查詢這個時段已經被訂位了幾筆
             long occupied = bookingRepository.countConflicts(
-                    storeId, date, seatType, currentTime, slotEnd);
+                    storeId, date, seatType, openTime, slotEnd);
 
-            // 4. 判斷是否為過去時間
-            boolean isPast = date.equals(LocalDate.now()) && currentTime.isBefore(LocalTime.now());
+            // 4. 判斷是否為過去的時段 (如果是今天，且時段已經過了，就算有空位也不顯示可訂)
+            boolean isPast = date.equals(LocalDate.now()) && openTime.isBefore(LocalTime.now());
 
-            // 5. 判定並加入清單 (occupied < totalTables)
+            // 5. 判定以上兩點條件是否都符合，如果符合就加入清單 (桌位有剩且不是過去時段)
             boolean isAvailable = (occupied < totalTables) && !isPast;
-            slots.add(new SlotAvailDto(currentTime.toString(), isAvailable));
+            slots.add(new SlotAvailDto(openTime.toString(), isAvailable));
 
             // 6. 往後跳過一個時段間隔
-            currentTime = currentTime.plusMinutes(timeSlot);
+            openTime = openTime.plusMinutes(timeSlot);
 
         }
 
@@ -279,7 +279,7 @@ public class BookingService {
 
         // 2. 執行軟刪除狀態變更
         booking.setStatus(false);
-        
+
         // 3. 儲存並取得更新後的實體 (為了確保能拿到關聯的 User 和 Store 資訊)
         Booking savedBooking = bookingRepository.save(booking);
 
@@ -367,7 +367,7 @@ public class BookingService {
         if (dto.getGuestPhone() != null)
             booking.setGuestPhone(dto.getGuestPhone());
 
-                Booking savedBooking = bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
 
         // 發送更新通知
         mailService.sendBookingNotification(
