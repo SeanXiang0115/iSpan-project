@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import ReplyForm from '@/components/ReplyForm.vue';
-import { getFeedbackList, getStatusList, replyFeedback } from '@/api/feedbackAP';
+import { getFeedbackList, getStatusList, replyFeedback, deleteFeedback } from '@/api/feedbackAP';
 import { useAdminAuthStore } from '@/stores/adminAuth';
 import Swal from 'sweetalert2';
 
@@ -126,6 +126,31 @@ const handleReplySubmit = async ({ feedbackId, reply, statusId }) => {
     }
 };
 
+// ─── 刪除 ────────────────────────────────────────────
+const handleDelete = async (item) => {
+    const result = await Swal.fire({
+        title: '確定要刪除此意見回饋嗎？',
+        text: '刪除後將無法復原！',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '確定刪除',
+        cancelButtonText: '取消'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            await deleteFeedback(item.id);
+            Swal.fire({ icon: 'success', title: '已刪除！', text: '該意見回饋已被刪除。', timer: 1500, showConfirmButton: false });
+            await loadFeedbacks(currentPage.value);
+        } catch (err) {
+            console.error('Delete failed:', err);
+            Swal.fire({ icon: 'error', title: '刪除失敗', text: '無法刪除該意見回饋，請稍後再試。' });
+        }
+    }
+};
+
 // ─── 輔助函式 ────────────────────────────────────────
 const getStatusBadgeClass = (statusName) => {
     const styleMap = {
@@ -242,6 +267,12 @@ const formatDate = (dateStr) => {
                                         @click="openViewModal(item)"
                                     >
                                         <i class="bi bi-eye"></i> 檢視
+                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-danger ms-1 text-white border-0"
+                                        @click="handleDelete(item)"
+                                    >
+                                        <i class="bi bi-trash"></i> 刪除
                                     </button>
                                 </td>
                             </tr>
