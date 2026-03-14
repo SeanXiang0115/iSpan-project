@@ -140,6 +140,20 @@ const handleAddToCart = async () => {
         return
     }
     
+    // 檢查購物車已有的數量
+    const cartItem = cartStore.items.find(i => String(i.productId) === String(products.value.id))
+    const alreadyInCart = cartItem ? cartItem.quantity : 0
+    
+    if (alreadyInCart + buyQuantity.value > products.value.stock) {
+        Swal.fire({
+            icon: 'warning',
+            title: '庫存不足',
+            text: `購物車已有 ${alreadyInCart} 件，庫存僅剩 ${products.value.stock} 件，無法再加入 ${buyQuantity.value} 件`
+        })
+        return
+    }
+
+
     try{
         await cartStore.addToCart({
         id: products.value.id,
@@ -149,6 +163,12 @@ const handleAddToCart = async () => {
         stock: products.value.stock, // 傳遞庫存給購物車
         quantity: buyQuantity.value // 傳遞選購數量
         });
+
+        
+        // if (result === undefined && cartStore.items.find(i => String(i.productId) === String(products.value.id))?.quantity === (cartStore.items.find(i => String(i.productId) === String(products.value.id))?.quantity)) {
+            
+        //     return
+        // }
 
         Swal.fire({
             icon: 'success',

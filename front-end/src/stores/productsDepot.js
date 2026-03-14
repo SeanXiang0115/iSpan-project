@@ -18,7 +18,7 @@ export const useProductsDepot = defineStore('productDepot', {
             }
 
             try {
-                const response = await apiWrapper.get('/products/all')  // ← 這行不見了
+                const response = await apiWrapper.get('/products/all')
 
                 // apiWrapper 已經把 response.data 取出來了，所以 response 本身就是陣列
                 const data = Array.isArray(response) ? response : (response.data || [])
