@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.shop.entity.Orders;
 import com.example.demo.shop.repository.OrdersRepository;
 import com.example.demo.shop.service.EcpayService;
+import com.example.demo.shop.service.OrderLogService;
 import com.example.demo.shop.service.OrderNotificationService;
 
 @RestController
@@ -30,6 +31,11 @@ public class EcpayController {
 
     @Autowired
     private OrderNotificationService orderNotificationService;
+
+    @Autowired
+    private OrderLogService orderLogService;
+
+    
 
     // 產生付款表單
     @GetMapping("/pay/{orderId}")
@@ -55,25 +61,46 @@ public class EcpayController {
                 .body(form);
     }
 
-    // 綠界付款完成後回傳（ReturnURL）- 後端通知
+    // 綠界付款完成後回傳（ReturnURL）- 後端通知 webhook
     @PostMapping("/return")
     public ResponseEntity<String> returnUrl(@RequestParam Map<String, String> params) {
+
+        // 2. 接收到通知將所有資料立刻存入 Log 
+        orderLogService.log("INFO", "ECPAY_CALLBACK", "收到綠界付款回傳", params.toString());
+
+        // 記錄原始 Log 
+        System.out.println("收到綠界 Webhook 通知: " + params);
+
         String rtnCode = params.get("RtnCode");
         String merchantTradeNo = params.get("MerchantTradeNo");
         String paymentType = params.getOrDefault("PaymentType", "");
 
+        
+
         if ("1".equals(rtnCode)) {
             ordersRepository.findByMerchantTradeNo(merchantTradeNo).ifPresent(order -> {
+
+                //冪等性檢查 避免重複送單
+                if ("待出貨".equals(order.getStatus()) || "已付款".equals(order.getStatus())) {
+                        System.out.println("訂單 " + merchantTradeNo + " 已處理過，跳過重複執行。");
+                        return; 
+                    }
+
+
                 String newStatus = getStatusByPaymentType(paymentType);
                 order.setStatus(newStatus);
                 order.setPayMethod("線上付款-" + paymentType);  
                 order.setPaymentDate(java.time.Instant.now());
                 ordersRepository.save(order);
-                System.out.println("付款成功，訂單：" + merchantTradeNo + "，狀態更新為：" + newStatus);
-                
-                // 發送支付成功郵件
+                //確保只發送一次通知
                 orderNotificationService.sendPaymentSuccessNotification(order);
+
+                orderLogService.log("INFO", "ECPAY_SUCCESS", 
+                    "付款成功，狀態更新為：" + newStatus, "merchantTradeNo=" + merchantTradeNo);
             });
+        }else {
+            orderLogService.log("WARN", "ECPAY_FAILED", 
+                "付款失敗，RtnCode=" + rtnCode, params.toString());
         }
 
         return ResponseEntity.ok("1|OK");
@@ -130,4 +157,11 @@ public class EcpayController {
         }
         return "待付款";
     }
+
+
+    @GetMapping("/test-log")
+public String testLog() {
+    orderLogService.log("INFO", "MANUAL_TEST", "測試手動寫入", "test payload");
+    return "Log sent!";
+}
 }
