@@ -2,6 +2,8 @@ package com.example.demo.seeder;
 
 import com.example.demo.Feedback.entity.Feedback;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +24,8 @@ import com.example.demo.MapSearch.service.GeocodingService;
 import com.example.demo.admin.Admin;
 import com.example.demo.admin.AdminPosition;
 import com.example.demo.admin.AdminRepository;
+import com.example.demo.shop.entity.OrderDetails;
+import com.example.demo.shop.entity.Orders;
 import com.example.demo.shop.entity.Products;
 import com.example.demo.shop.entity.Stock;
 import com.example.demo.shop.repository.ProductsRepository;
@@ -47,6 +51,8 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final GeocodingService geocodingService;
     private final ProductsRepository productsRepository;
     private final FeedbackRepository feedbackRepository;
+    private final com.example.demo.shop.repository.OrdersRepository ordersRepository;
+    private final com.example.demo.shop.repository.OrderDetailsRepository orderDetailsRepository;
 
     @Value("${app.seeder.enabled:false}")
     private boolean seederEnabled;
@@ -61,7 +67,9 @@ public class DatabaseSeeder implements CommandLineRunner {
             PasswordEncoder passwordEncoder,
             GeocodingService geocodingService,
             ProductsRepository productsRepository,
-            FeedbackRepository feedbackRepository) {
+            FeedbackRepository feedbackRepository,
+            com.example.demo.shop.repository.OrdersRepository ordersRepository,
+            com.example.demo.shop.repository.OrderDetailsRepository orderDetailsRepository) {
         this.userRepository = userRepository;
         this.storeInfoRepository = storeInfoRepository;
         this.adminRepository = adminRepository;
@@ -72,6 +80,8 @@ public class DatabaseSeeder implements CommandLineRunner {
         this.geocodingService = geocodingService;
         this.productsRepository = productsRepository;
         this.feedbackRepository = feedbackRepository;
+        this.ordersRepository = ordersRepository;
+        this.orderDetailsRepository = orderDetailsRepository;
     }
 
     @Override
@@ -91,6 +101,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         seedUsersAndStores(); // 產生User與Stores
         seedProducts(); // 來自原本的 DataInitializer
         seedFeedbacks(); // 產生Feedback資料
+        seedOrders(); //產生orders
 
         System.out.println("Database seeding completed.");
     }
@@ -482,9 +493,84 @@ public class DatabaseSeeder implements CommandLineRunner {
         stock.setProduct(p);
         p.setStock(stock);
 
-        // 先存取得 productId，再設定商品編號
         Products saved = productsRepository.save(p);
         saved.setProductCode(String.format("PRD-%04d", saved.getProductId()));
         productsRepository.save(saved);
     }
+
+    private void seedOrders() {
+    if (ordersRepository.count() > 0) {
+        return;
+    }
+
+    System.out.println("Starting to seed orders...");
+    Faker faker = new Faker(Locale.TAIWAN);
+    
+    
+    List<User> normalUsers = userRepository.findAll().stream()
+        .filter(u -> u.getIsStore() != null && !u.getIsStore()) 
+        .toList();
+    List<Products> allProducts = productsRepository.findAll();
+    
+    if (normalUsers.isEmpty() || allProducts.isEmpty()) {
+        System.out.println("Skip seeding orders: No normal users or products found.");
+        return;
+    }
+
+    List<String> statuses = Arrays.asList("待付款", "待出貨", "處理中", "已完成");
+    List<String> payMethods = Arrays.asList("信用卡", "ATM", "超商代碼");
+
+    for (int i = 0; i < 15; i++) {
+        User buyer = normalUsers.get(faker.number().numberBetween(0, normalUsers.size()));
+        String currentStatus = statuses.get(i % statuses.size());
+
+        // A. 建立訂單主檔
+        Orders order = new Orders();
+        order.setUser(buyer);
+        order.setReceiverName(buyer.getName());
+        order.setReceiverPhone("09" + faker.number().digits(8));
+        order.setReceiverAddress(faker.address().fullAddress());
+        order.setNote(faker.lorem().sentence());
+        order.setStatus(currentStatus);
+        order.setPayMethod(payMethods.get(faker.number().numberBetween(0, payMethods.size())));
+        order.setDeliveryMethod("宅配");
+        order.setMerchantTradeNo("ECPAY" + System.currentTimeMillis() + i);
+        
+        // 建立時間與付款時間 (已出貨才給付款時間)
+        order.setCreatedAt(LocalDateTime.now().minusDays(faker.number().numberBetween(1, 10)));
+        if ("已出貨".equals(currentStatus)) {
+            order.setPaymentDate(Instant.now().minus(java.time.Duration.ofDays(1)));
+        }
+
+        
+        Orders savedOrder = ordersRepository.save(order);
+
+        int detailCount = faker.number().numberBetween(1, 4);
+        BigDecimal totalOrderPrice = BigDecimal.ZERO;
+        List<OrderDetails> detailsList = new ArrayList<>();
+
+        for (int j = 0; j < detailCount; j++) {
+            Products product = allProducts.get(faker.number().numberBetween(0, allProducts.size()));
+            int qty = faker.number().numberBetween(1, 3);
+            BigDecimal subtotal = product.getPrice().multiply(BigDecimal.valueOf(qty));
+
+            OrderDetails detail = new OrderDetails();
+            detail.setOrder(savedOrder);
+            detail.setProduct(product);
+            detail.setOrderQuantity(qty);
+            detail.setProductNameSnapshot(product.getProductName());
+            detail.setPriceSnapshot(product.getPrice());
+            detail.setSubtotal(subtotal);
+            detail.setCommentsSection("顧客備註: " + faker.funnyName().name());
+            
+            orderDetailsRepository.save(detail); 
+            totalOrderPrice = totalOrderPrice.add(subtotal);
+        }
+
+        savedOrder.setTotalPrice(totalOrderPrice);
+        ordersRepository.save(savedOrder);
+    }
+    System.out.println("Seeded 15 Orders with complete details.");
+}
+
 }
